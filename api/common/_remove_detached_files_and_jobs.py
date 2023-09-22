@@ -1,7 +1,7 @@
 from ._get_mongo_client import _get_mongo_client
 
 
-def _remove_datached_files_and_jobs(project_id: str):
+def _remove_detached_files_and_jobs(project_id: str):
     client = _get_mongo_client()
     files_collection = client['protocaas']['files']
     jobs_collection = client['protocaas']['jobs']

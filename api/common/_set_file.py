@@ -1,6 +1,6 @@
 import time
 from ._get_mongo_client import _get_mongo_client
-from ._remove_detached_files_and_jobs import _remove_datached_files_and_jobs
+from ._remove_detached_files_and_jobs import _remove_detached_files_and_jobs
 
 
 async def _set_file(*,
@@ -54,7 +54,7 @@ async def _set_file(*,
     await files_collection.insert_one(new_file)
 
     if deleted_old_file:
-        await _remove_datached_files_and_jobs(project_id)
+        await _remove_detached_files_and_jobs(project_id)
     
     await projects_collection.update_one({
         'projectId': project_id
@@ -72,6 +72,8 @@ async def _set_file(*,
             'timestampModified': time.time()
         }
     })
+
+    return new_file['fileId']
 
 def _create_random_id(length: int) -> str:
     import random

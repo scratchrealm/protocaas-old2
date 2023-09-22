@@ -2,7 +2,7 @@ import os
 import time
 from fastapi import APIRouter, HTTPException, Request
 from ..common._get_mongo_client import _get_mongo_client
-from ..common._remove_detached_files_and_jobs import _remove_datached_files_and_jobs
+from ..common._remove_detached_files_and_jobs import _remove_detached_files_and_jobs
 from ..common._pubsub import _publish_pubsub_message
 
 
@@ -10,7 +10,7 @@ router = APIRouter()
 
 # create job
 @router.post("/api/gui/jobs")
-async def create_job_endpoint(request: Request):
+async def create_job_handler(request: Request):
     try:
         # authenticate the request
         headers = request.headers
@@ -111,7 +111,7 @@ async def create_job_endpoint(request: Request):
                 something_was_deleted = True
         
         if something_was_deleted:
-            await _remove_datached_files_and_jobs(body['projectId'])
+            await _remove_detached_files_and_jobs(body['projectId'])
         
         job = {
             'jobId': job_id,
