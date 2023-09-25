@@ -10,7 +10,7 @@ from ._get_workspace_role import _get_workspace_role
 router = APIRouter()
 
 # get file
-@router.get("/api/gui/projects/{project_id}/files/{file_name}")
+@router.get("/api/gui/projects/{project_id}/files/{file_name:path}")
 async def get_file(project_id, file_name, request: Request):
     try:
         client = _get_mongo_client()

@@ -25,6 +25,7 @@ async def create_job_handler(request: Request):
         project_id = body['projectId']
         processor_name = body['processorName']
         input_files_from_request = body['inputFiles']
+        output_files_from_request = body['outputFiles']
         input_parameters = body['inputParameters']
         processor_spec = body['processorSpec']
         batch_id = body.get('batchId', None)
@@ -73,7 +74,7 @@ async def create_job_handler(request: Request):
             return file_name.replace('${job-id}', job_id)
         
         output_files = []
-        for output_file in body['outputFiles']:
+        for output_file in output_files_from_request:
             output_files.append({
                 **output_file,
                 'fileName': filter_output_file_name(output_file['fileName'])

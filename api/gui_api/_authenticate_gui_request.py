@@ -16,6 +16,7 @@ async def _authenticate_gui_request(headers: dict):
         else:
             return a['user_id']
     user_id = await _get_user_id_for_access_token(github_access_token)
+    user_id = 'github|' + user_id
     _user_ids_for_access_tokens[github_access_token] = {
         'user_id': user_id,
         'timestamp': time.time()

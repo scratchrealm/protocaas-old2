@@ -27,9 +27,13 @@ async def get_project(project_id, request: Request):
 @router.get("/api/gui/projects")
 async def get_projects(request: Request):
     try:
+        # parse the request
+        body = await request.json()
+        workspace_id = body['workspaceId']
+
         client = _get_mongo_client()
         projects_collection = client['protocaas']['projects']
-        projects = await projects_collection.find({}).to_list(length=None)
+        projects = await projects_collection.find({'workspaceId': workspace_id}).to_list(length=None)
         for project in projects:
             _remove_id_field(project)
         return {'projects': projects, 'success': True}
@@ -156,5 +160,21 @@ async def delete_project(project_id, request: Request):
         })
 
         return {'success': True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# get jobs
+@router.get("/api/gui/projects/{project_id}/jobs")
+async def get_jobs(project_id, request: Request):
+    try:
+        client = _get_mongo_client()
+        jobs_collection = client['protocaas']['jobs']
+        jobs = await jobs_collection.find({
+            'projectId': project_id
+        }).to_list(length=None)
+        for job in jobs:
+            _remove_id_field(job)
+            job['jobPrivateKey'] = '' # hide the private key
+        return {'jobs': jobs, 'success': True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

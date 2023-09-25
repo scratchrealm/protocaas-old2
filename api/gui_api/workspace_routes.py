@@ -115,6 +115,38 @@ async def set_workspace_name(workspace_id, request: Request):
         return {'success': True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# set workspace publicly readable
+@router.put("/api/gui/workspaces/{workspace_id}/publicly_readable")
+async def set_workspace_public(workspace_id, request: Request):
+    try:
+        # authenticate the request
+        headers = request.headers
+        user_id = await _authenticate_gui_request(headers)
+
+        # parse the request
+        body = await request.json()
+        publicly_readable = body['publiclyReadable']
+
+        client = _get_mongo_client()
+        workspaces_collection = client['protocaas']['workspaces']
+        workspace = await workspaces_collection.find_one({'workspaceId': workspace_id})
+        if workspace is None:
+            raise Exception(f"No workspace with ID {workspace_id}")
+        role = _get_workspace_role(workspace, user_id)
+        if role != 'admin':
+            raise Exception('User does not have permission to admin this workspace')
+        
+        workspaces_collection.update_one({'workspaceId': workspace_id}, {
+            '$set': {
+                'publiclyReadable': publicly_readable,
+                'timestampModified': time.time()
+            }
+        })
+
+        return {'success': True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
 # set workspace listed
 @router.put("/api/gui/workspaces/{workspace_id}/listed")
@@ -242,5 +274,29 @@ async def delete_workspace(workspace_id, request: Request):
         await workspaces_collection.delete_one({'workspaceId': workspace_id})
 
         return {'success': True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# get projects
+@router.get("/api/gui/workspaces/{workspace_id}/projects")
+async def get_workspace_projects(workspace_id, request: Request):
+    try:
+        headers = request.headers
+        user_id = await _authenticate_gui_request(headers)
+
+        client = _get_mongo_client()
+        workspaces_collection = client['protocaas']['workspaces']
+        workspace = await workspaces_collection.find_one({'workspaceId': workspace_id})
+        if workspace is None:
+            raise Exception(f"No workspace with ID {workspace_id}")
+        role = _get_workspace_role(workspace, user_id)
+        if role == 'none':
+            raise Exception('User does not have permission to read this workspace')
+
+        projects_collection = client['protocaas']['projects']
+        projects = await projects_collection.find({'workspaceId': workspace_id}).to_list(length=None)
+        for project in projects:
+            _remove_id_field(project)
+        return {'projects': projects, 'success': True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

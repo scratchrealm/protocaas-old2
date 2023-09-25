@@ -130,6 +130,7 @@ async def register_compute_resource(request: Request):
         body = await request.json()
         compute_resource_id = body['computeResourceId']
         resource_code = body['resourceCode']
+        name = body['name']
         
         client = _get_mongo_client()
         compute_resources_collection = client['protocaas']['computeResources']
@@ -143,6 +144,7 @@ async def register_compute_resource(request: Request):
             compute_resources_collection.update_one({'computeResourceId': compute_resource_id}, {
                 '$set': {
                     'ownerId': user_id,
+                    'name': name,
                     'timestampModified': time.time()
                 }
             })
@@ -150,11 +152,39 @@ async def register_compute_resource(request: Request):
             compute_resources_collection.insert_one({
                 'computeResourceId': compute_resource_id,
                 'ownerId': user_id,
+                'name': name,
                 'timestampCreated': time.time(),
                 'apps': []
             })
         
         return {'success': True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# get jobs for compute resource
+@router.get("/api/gui/compute_resources/{compute_resource_id}/jobs")
+async def get_jobs_for_compute_resource(compute_resource_id, request: Request):
+    try:
+        # authenticate the request
+        headers = request.headers
+        user_id = await _authenticate_gui_request(headers)
+
+        client = _get_mongo_client()
+        compute_resources_collection = client['protocaas']['computeResources']
+        compute_resource = await compute_resources_collection.find_one({'computeResourceId': compute_resource_id})
+        if compute_resource is None:
+            raise Exception(f"No compute resource with ID {compute_resource_id}")
+        if compute_resource['ownerId'] != user_id:
+            raise Exception('User does not have permission to view jobs for this compute resource')
+
+        jobs_collection = client['protocaas']['jobs']
+        jobs = await jobs_collection.find({
+            'computeResourceId': compute_resource_id
+        }).to_list(length=None)
+        for job in jobs:
+            _remove_id_field(job)
+            job['jobPrivateKey'] = '' # hide the private key
+        return {'jobs': jobs, 'success': True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
