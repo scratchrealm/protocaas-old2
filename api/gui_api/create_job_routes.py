@@ -138,7 +138,7 @@ async def create_job_handler(request: Request):
         
         await jobs_collection.insert_one(job)
 
-        _publish_pubsub_message(
+        await _publish_pubsub_message(
             channel=job['computeResourceId'],
             message={
                 'type': 'newPendingJob',

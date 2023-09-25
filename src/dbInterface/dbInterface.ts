@@ -203,7 +203,7 @@ export const deleteFile = async (workspaceId: string, projectId: string, fileNam
     if (!resp.success) throw Error(`Error in deleteFile: ${resp.error}`)
 }
 
-export const deleteProject = async (workspaceId: string, projectId: string, auth: Auth): Promise<void> => {
+export const deleteProject = async (projectId: string, auth: Auth): Promise<void> => {
     const url = `/api/gui/projects/${projectId}`
     const resp = await deleteRequest(url, auth)
     if (!resp.success) throw Error(`Error in deleteProject: ${resp.error}`)
@@ -375,7 +375,7 @@ export const createJob = async (
     return response.jobId
 }
 
-export const deleteJob = async (workspaceId: string, projectId: string, jobId: string, auth: Auth): Promise<void> => {
+export const deleteJob = async (jobId: string, auth: Auth): Promise<void> => {
     const url = `/api/gui/jobs/${jobId}`
     const resp = await deleteRequest(url, auth)
     if (!resp.success) throw Error(`Error in deleteJob: ${resp.error}`)

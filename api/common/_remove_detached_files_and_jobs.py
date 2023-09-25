@@ -1,17 +1,17 @@
 from ._get_mongo_client import _get_mongo_client
 
 
-def _remove_detached_files_and_jobs(project_id: str):
+async def _remove_detached_files_and_jobs(project_id: str):
     client = _get_mongo_client()
     files_collection = client['protocaas']['files']
     jobs_collection = client['protocaas']['jobs']
 
-    files = list(files_collection.find({
+    files = await files_collection.find({
         'projectId': project_id
-    }))
-    jobs = list(jobs_collection.find({
+    }).to_list(length=None)
+    jobs = await jobs_collection.find({
         'projectId': project_id
-    }))
+    }).to_list(length=None)
 
     something_changed = True
     while something_changed:
@@ -33,13 +33,13 @@ def _remove_detached_files_and_jobs(project_id: str):
         something_changed = False
         if len(job_ids_to_delete) > 0:
             something_changed = True
-            jobs_collection.delete_many({
+            await jobs_collection.delete_many({
                 'jobId': {'$in': list(job_ids_to_delete)}
             })
             jobs = [x for x in jobs if x['jobId'] not in job_ids_to_delete]
         if len(file_ids_to_delete) > 0:
             something_changed = True
-            files_collection.delete_many({
+            await files_collection.delete_many({
                 'fileId': {'$in': list(file_ids_to_delete)}
             })
             files = [x for x in files if x['fileId'] not in file_ids_to_delete]

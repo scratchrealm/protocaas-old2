@@ -228,14 +228,12 @@ export const SetupProjectPage: FunctionComponent<PropsWithChildren<Props>> = ({c
     }, [projectId, refreshJobs])
 
     const deleteJobHandler = useCallback(async (jobId: string) => {
-        if (!project) return
-        await deleteJob(project.workspaceId, projectId, jobId, auth)
-    }, [project, projectId, auth])
+        await deleteJob(jobId, auth)
+    }, [auth])
 
     const deleteProjectHandler = useMemo(() => (async () => {
-        if (!project) return
-        await deleteProject(project.workspaceId, projectId, auth)
-    }), [project, projectId, auth])
+        await deleteProject(projectId, auth)
+    }), [projectId, auth])
 
     const setProjectNameHandler = useCallback(async (name: any) => {
         await setProjectName(projectId, name, auth)
