@@ -1,7 +1,10 @@
+import os
 import time
 from fastapi import APIRouter, HTTPException, Request
 from ..common._get_mongo_client import _get_mongo_client
 from ..common._remove_id_field import _remove_id_field
+from ..common._crypto_keys import _verify_signature
+from ._authenticate_gui_request import _authenticate_gui_request
 
 
 router = APIRouter()
@@ -91,3 +94,76 @@ async def delete_compute_resource(compute_resource_id, request: Request):
         return {'success': True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# get pubsub subscription
+@router.get("/api/gui/compute_resources/{compute_resource_id}/pubsub_subscription")
+async def get_pubsub_subscription(compute_resource_id, request: Request):
+    try:
+        client = _get_mongo_client()
+        compute_resources_collection = client['protocaas']['computeResources']
+        compute_resource = await compute_resources_collection.find_one({'computeResourceId': compute_resource_id})
+        if compute_resource is None:
+            raise Exception(f"No compute resource with ID {compute_resource_id}")
+        VITE_PUBNUB_SUBSCRIBE_KEY = os.environ.get('VITE_PUBNUB_SUBSCRIBE_KEY')
+        if VITE_PUBNUB_SUBSCRIBE_KEY is None:
+            raise Exception('Environment variable not set: VITE_PUBNUB_SUBSCRIBE_KEY')
+        subscription = {
+            'pubnubSubscribeKey': VITE_PUBNUB_SUBSCRIBE_KEY,
+            'pubnubChannel': compute_resource_id,
+            'pubnubUser': compute_resource_id
+        }
+        return {'subscription': subscription, 'success': True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# register compute resource
+@router.post("/api/gui/compute_resources/register")
+async def register_compute_resource(request: Request):
+    try:
+        # authenticate the request
+        headers = request.headers
+        user_id = await _authenticate_gui_request(headers)
+        if user_id is None:
+            raise Exception('User is not authenticated')
+        
+        # parse the request
+        body = await request.json()
+        compute_resource_id = body['computeResourceId']
+        resource_code = body['resourceCode']
+        
+        client = _get_mongo_client()
+        compute_resources_collection = client['protocaas']['computeResources']
+
+        ok = await _verify_resource_code(compute_resource_id, resource_code)
+        if not ok:
+            raise Exception('Invalid resource code')
+        
+        compute_resource = await compute_resources_collection.find_one({'computeResourceId': compute_resource_id})
+        if compute_resource is not None:
+            compute_resources_collection.update_one({'computeResourceId': compute_resource_id}, {
+                '$set': {
+                    'ownerId': user_id,
+                    'timestampModified': time.time()
+                }
+            })
+        else:
+            compute_resources_collection.insert_one({
+                'computeResourceId': compute_resource_id,
+                'ownerId': user_id,
+                'timestampCreated': time.time(),
+                'apps': []
+            })
+        
+        return {'success': True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+def _verify_resource_code(compute_resource_id: str, resource_code: str) -> bool:
+    # check that timestamp is within 5 minutes of current time
+    timestamp = int(resource_code.split('-')[0])
+    if abs(timestamp - time.time()) > 300:
+        return False
+    signature = resource_code.split('-')[1]
+    if not _verify_signature({'timestamp': timestamp}, compute_resource_id, signature):
+        return False
+    return True

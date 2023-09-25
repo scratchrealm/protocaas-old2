@@ -2,6 +2,9 @@ import time
 from fastapi import APIRouter, HTTPException, Request
 from ..common._get_mongo_client import _get_mongo_client
 from ..common._remove_id_field import _remove_id_field
+from ..common._create_random_id import _create_random_id
+from ._authenticate_gui_request import _authenticate_gui_request
+from ._get_workspace_role import _get_workspace_role
 
 
 router = APIRouter()
@@ -155,8 +158,3 @@ async def delete_project(project_id, request: Request):
         return {'success': True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-def _create_random_id(length: int) -> str:
-    import random
-    import string
-    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))

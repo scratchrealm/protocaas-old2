@@ -1,6 +1,7 @@
 import time
 from ._get_mongo_client import _get_mongo_client
 from ._remove_detached_files_and_jobs import _remove_detached_files_and_jobs
+from ._create_random_id import _create_random_id
 
 
 async def _set_file(*,
@@ -74,8 +75,3 @@ async def _set_file(*,
     })
 
     return new_file['fileId']
-
-def _create_random_id(length: int) -> str:
-    import random
-    import string
-    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
