@@ -58,8 +58,9 @@ async def get_project_jobs(project_id, request: Request) -> GetProjectJobsRespon
         jobs = await jobs_collection.find({'projectId': project_id}).to_list(length=None)
         for job in jobs:
             _remove_id_field(job)
-            job['jobPrivateKey'] = '' # hide the private key
         jobs = [ProtocaasJob(**job) for job in jobs] # validate jobs
+        for job in jobs:
+            job.jobPrivateKey = '' # hide the private key
         return GetProjectJobsResponse(jobs=jobs, success=True)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

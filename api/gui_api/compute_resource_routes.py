@@ -77,6 +77,7 @@ async def set_compute_resource_apps(compute_resource_id, data: SetComputeResourc
         compute_resource = await compute_resources_collection.find_one({'computeResourceId': compute_resource_id})
         if compute_resource is None:
             raise Exception(f"No compute resource with ID {compute_resource_id}")
+        _remove_id_field(compute_resource)
         compute_resource = ProtocaasComputeResource(**compute_resource) # validate compute resource
         if compute_resource.ownerId != user_id:
             raise Exception('User does not have permission to admin this compute resource')
@@ -108,6 +109,7 @@ async def delete_compute_resource(compute_resource_id, request: Request) -> Dele
         compute_resource = await compute_resources_collection.find_one({'computeResourceId': compute_resource_id})
         if compute_resource is None:
             raise Exception(f"No compute resource with ID {compute_resource_id}")
+        _remove_id_field(compute_resource)
         compute_resource = ProtocaasComputeResource(**compute_resource) # validate compute resource
         if compute_resource.ownerId != user_id:
             raise Exception('User does not have permission to delete this compute resource')
@@ -131,6 +133,7 @@ async def get_pubsub_subscription(compute_resource_id, request: Request):
         compute_resource = await compute_resources_collection.find_one({'computeResourceId': compute_resource_id})
         if compute_resource is None:
             raise Exception(f"No compute resource with ID {compute_resource_id}")
+        _remove_id_field(compute_resource)
         compute_resource = ProtocaasComputeResource(**compute_resource) # validate compute resource
         VITE_PUBNUB_SUBSCRIBE_KEY = os.environ.get('VITE_PUBNUB_SUBSCRIBE_KEY')
         if VITE_PUBNUB_SUBSCRIBE_KEY is None:
@@ -191,7 +194,7 @@ async def register_compute_resource(data: RegisterComputeResourceRequest, reques
                 timestampCreated=time.time(),
                 apps=[]
             )
-            compute_resources_collection.insert_one(new_compute_resource)
+            compute_resources_collection.insert_one(new_compute_resource.dict(exclude_none=True))
         
         return RegisterComputeResourceResponse(success=True)
     except Exception as e:
@@ -214,6 +217,7 @@ async def get_jobs_for_compute_resource(compute_resource_id, request: Request) -
         compute_resource = await compute_resources_collection.find_one({'computeResourceId': compute_resource_id})
         if compute_resource is None:
             raise Exception(f"No compute resource with ID {compute_resource_id}")
+        _remove_id_field(compute_resource)
         compute_resource = ProtocaasComputeResource(**compute_resource) # validate compute resource
         if compute_resource.ownerId != user_id:
             raise Exception('User does not have permission to view jobs for this compute resource')

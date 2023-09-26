@@ -93,7 +93,7 @@ async def get_workspaces(request: Request):
         workspaces = await workspaces_collection.find({}).to_list(length=None)
         for workspace in workspaces:
             _remove_id_field(workspace)
-        workspacces = [ProtocaasWorkspace(**workspace) for workspace in workspaces] # validate workspaces
+        workspaces = [ProtocaasWorkspace(**workspace) for workspace in workspaces] # validate workspaces
         workspaces2: List[ProtocaasWorkspace] = []
         for workspace in workspaces:
             role = _get_workspace_role(workspace, user_id)

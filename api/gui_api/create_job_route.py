@@ -7,6 +7,7 @@ from ..common._get_mongo_client import _get_mongo_client
 from ..common._remove_detached_files_and_jobs import _remove_detached_files_and_jobs
 from ..common._pubsub import _publish_pubsub_message
 from ..common._create_random_id import _create_random_id
+from ..common._remove_id_field import _remove_id_field
 from ..common.protocaas_types import ProtocaasWorkspace, ProtocaasProject, ProtocaasJob, ProtocaasFile, ProtocaasJobInputFile, ProtocaasJobOutputFile, ProtocaasJobInputParameter, ComputeResourceSpecProcessor
 from ._authenticate_gui_request import _authenticate_gui_request
 from ._get_workspace_role import _get_workspace_role
@@ -51,6 +52,7 @@ async def create_job_handler(data: CreateJobRequest, request: Request):
         workspace = await workspaces_collection.find_one({'workspaceId': workspace_id})
         if workspace is None:
             raise Exception(f"No workspace with ID {workspace_id}")
+        _remove_id_field(workspace)
         workspace = ProtocaasWorkspace(**workspace) # validate workspace
         workspace_role = _get_workspace_role(workspace, user_id)
         if workspace_role != 'admin' and workspace_role != 'editor':
@@ -66,6 +68,7 @@ async def create_job_handler(data: CreateJobRequest, request: Request):
         project = await projects_collection.find_one({'projectId': project_id})
         if project is None:
             raise Exception(f"No project with ID {project_id}")
+        _remove_id_field(project)
         project = ProtocaasProject(**project) # validate project
         # important to check this
         if project.workspaceId != workspace_id:
@@ -80,6 +83,7 @@ async def create_job_handler(data: CreateJobRequest, request: Request):
             })
             if file is None:
                 raise Exception(f"Project input file does not exist: {input_file['fileName']}")
+            _remove_id_field(file)
             file = ProtocaasFile(**file)
             input_files.append(
                 ProtocaasJobInputFile(
@@ -127,6 +131,8 @@ async def create_job_handler(data: CreateJobRequest, request: Request):
         all_jobs = await jobs_collection.find({
             'projectId': project_id
         }).to_list(length=None)
+        for job in all_jobs:
+            _remove_id_field(job)
         all_jobs = [ProtocaasJob(**x) for x in all_jobs]
         output_file_names = [x.fileName for x in output_files]
         for job in all_jobs:

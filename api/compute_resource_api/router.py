@@ -87,7 +87,8 @@ async def compute_resource_get_unfinished_jobs(compute_resource_id, request: Req
             'computeResourceId': compute_resource_id,
             'status': {'$in': ['pending', 'queued', 'starting', 'running']}
         }).to_list(length=None)
-
+        for job in jobs:
+            _remove_id_field(job)
         jobs = [ProtocaasJob(**job) for job in jobs] # validate jobs
 
         compute_resource_nodes_collection = client['protocaas']['computeResourceNodes']

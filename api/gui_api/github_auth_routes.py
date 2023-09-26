@@ -1,5 +1,6 @@
 import os
-from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel
+from fastapi import APIRouter, Request
 import aiohttp
 
 

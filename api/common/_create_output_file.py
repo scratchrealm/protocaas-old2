@@ -1,7 +1,6 @@
 import time
 import aiohttp
 from ._get_mongo_client import _get_mongo_client
-from ._set_file import _set_file
 from ._remove_id_field import _remove_id_field
 from ._create_random_id import _create_random_id
 from ._remove_detached_files_and_jobs import _remove_detached_files_and_jobs
