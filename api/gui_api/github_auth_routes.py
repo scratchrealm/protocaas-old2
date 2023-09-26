@@ -5,9 +5,12 @@ import aiohttp
 
 router = APIRouter()
 
-# create job
+# github auth
+class GithubAuthResponse(BaseModel):
+    access_token: str
+
 @router.get("/api/github_auth/{code}")
-async def github_auth(code, request: Request):
+async def github_auth(code, request: Request) -> GithubAuthResponse:
     GITHUB_CLIENT_ID = os.environ.get('VITE_GITHUB_CLIENT_ID')
     GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET')
     if GITHUB_CLIENT_ID is None:
@@ -23,4 +26,4 @@ async def github_auth(code, request: Request):
             r = await resp.json()
             if 'access_token' not in r:
                 raise Exception(f'No access_token in response: {r["error"]} ({r["error_description"]})')
-            return {'access_token': r['access_token']}
+            return GithubAuthResponse(access_token=r['access_token'])

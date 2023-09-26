@@ -1,6 +1,11 @@
+import time
 import aiohttp
 from ._get_mongo_client import _get_mongo_client
 from ._set_file import _set_file
+from ._remove_id_field import _remove_id_field
+from ._create_random_id import _create_random_id
+from ._remove_detached_files_and_jobs import _remove_detached_files_and_jobs
+from .protocaas_types import ProtocaasFile, ProtocaasProject
 
 
 async def _create_output_file(*,
@@ -13,26 +18,59 @@ async def _create_output_file(*,
 ) -> str: # returns the ID of the created file
     size = await _get_size_for_remote_file(url)
 
-    await _set_file(
-        project_id=project_id,
-        workspace_id=workspace_id,
-        file_name=file_name,
-        content=f"url:{url}",
-        size=size,
-        job_id=job_id,
-        user_id=user_id,
-        metadata={}
-    )
-
     client = _get_mongo_client()
+    projects_collection = client['protocaas']['projects']
     files_collection = client['protocaas']['files']
-    file = await files_collection.find_one({
+
+    project = await projects_collection.find_one({
+        'projectId': project_id
+    })
+    if project is None:
+        raise Exception('Project not found')
+    _remove_id_field(project)
+    project = ProtocaasProject(**project) # validate project
+    if project.workspaceId != workspace_id:
+        raise Exception('Incorrect workspace ID')
+    
+    existing_file = await files_collection.find_one({
         'projectId': project_id,
         'fileName': file_name
     })
-    if file is None:
-        raise Exception('Unexpected: File not found in database')
-    return file['fileId']
+    if existing_file is not None:
+        await files_collection.delete_one({
+            'projectId': project_id,
+            'fileName': file_name
+        })
+        deleted_old_file = True
+    else:
+        deleted_old_file = False
+
+    new_file = ProtocaasFile(
+        projectId=project_id,
+        workspaceId=workspace_id,
+        fileId=_create_random_id(8),
+        userId=user_id,
+        fileName=file_name,
+        size=size,
+        timestampCreated=time.time(),
+        content=url,
+        metadata={},
+        jobId=job_id
+    )
+    await files_collection.insert_one(new_file.dict(exclude_none=True))
+
+    if deleted_old_file:
+        await _remove_detached_files_and_jobs(project_id)
+    
+    await projects_collection.update_one({
+        'projectId': project_id
+    }, {
+        '$set': {
+            'timestampModified': time.time()
+        }
+    })
+
+    return new_file.fileId
 
 async def _get_size_for_remote_file(url: str) -> int:
     response = await _head_request(url)

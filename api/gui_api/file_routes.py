@@ -1,8 +1,12 @@
+from typing import Union, List, Any
+import time
+from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Request
 from ..common._get_mongo_client import _get_mongo_client
 from ..common._remove_id_field import _remove_id_field
 from ..common._remove_detached_files_and_jobs import _remove_detached_files_and_jobs
-from ..common._set_file import _set_file
+from ..common._create_random_id import _create_random_id
+from ..common.protocaas_types import ProtocaasFile, ProtocaasProject, ProtocaasWorkspace
 from ._authenticate_gui_request import _authenticate_gui_request
 from ._get_workspace_role import _get_workspace_role
 
@@ -10,6 +14,10 @@ from ._get_workspace_role import _get_workspace_role
 router = APIRouter()
 
 # get file
+class GetFileResponse(BaseModel):
+    file: ProtocaasFile
+    success: bool
+
 @router.get("/api/gui/projects/{project_id}/files/{file_name:path}")
 async def get_file(project_id, file_name, request: Request):
     try:
@@ -19,14 +27,19 @@ async def get_file(project_id, file_name, request: Request):
             'projectId': project_id,
             'fileName': file_name
         })
-        _remove_id_field(file)
         if file is None:
             raise Exception(f"No file with name {file_name} in project with ID {project_id}")
+        _remove_id_field(file)
+        file = ProtocaasFile(**file) # validate file
         return {'file': file, 'success': True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 # get files
+class GetFilesResponse(BaseModel):
+    files: List[ProtocaasFile]
+    success: bool
+
 @router.get("/api/gui/projects/{project_id}/files")
 async def get_files(project_id, request: Request):
     try:
@@ -37,54 +50,100 @@ async def get_files(project_id, request: Request):
         }).to_list(length=None)
         for file in files:
             _remove_id_field(file)
+        files = [ProtocaasFile(**file) for file in files] # validate files
         return {'files': files, 'success': True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 # set file
+class SetFileRequest(BaseModel):
+    content: str
+    jobId: Union[str, None] = None
+    size: Union[int, None] = None
+    metadata: dict = {}
+
+class SetFileResponse(BaseModel):
+    fileId: str
+    success: bool
+
 @router.put("/api/gui/projects/{project_id}/files/{file_name}")
-async def set_file(project_id, file_name, request: Request):
+async def set_file(project_id, file_name, data: SetFileRequest, request: Request):
     try:
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
 
         # parse the request
-        body = await request.json()
-        content = body['content']
-        job_id = body.get('jobId', None)
-        size = body.get('size', None)
-        metadata = body.get('metadata', {})
+        content = data.content
+        job_id = data.jobId
+        size = data.size
+        metadata = data.metadata
 
         client = _get_mongo_client()
         projects_collection = client['protocaas']['projects']
         project = await projects_collection.find_one({'projectId': project_id})
         if project is None:
             raise Exception(f"No project with ID {project_id}")
-        workspace_id = project['workspaceId']
+        _remove_id_field(project)
+        project = ProtocaasProject(**project) # validate project
+        workspace_id = project.workspaceId
         workspaces_collection = client['protocaas']['workspaces']
         workspace = await workspaces_collection.find_one({'workspaceId': workspace_id})
         if workspace is None:
             raise Exception(f"No workspace with ID {workspace_id}")
+        _remove_id_field(workspace)
+        workspace = ProtocaasWorkspace(**workspace) # validate workspace
         workspace_role = _get_workspace_role(workspace, user_id)
         if workspace_role != 'admin' and workspace_role != 'editor':
             raise Exception('User does not have permission to set file content in this project')
 
-        file_id = await _set_file(
-            project_id=project_id,
-            workspace_id=workspace_id,
-            file_name=file_name,
-            content=content,
-            size=size,
-            job_id=job_id,
-            metadata=metadata
-        )
+        files_collection = client['protocaas']['files']  
+        existing_file = await files_collection.find_one({
+            'projectId': project_id,
+            'fileName': file_name
+        })
+        if existing_file is not None:
+            await files_collection.delete_one({
+                'projectId': project_id,
+                'fileName': file_name
+            })
+            deleted_old_file = True
+        else:
+            deleted_old_file = False
 
-        return {'fileId': file_id, 'success': True}
+        new_file = ProtocaasFile(
+            projectId=project_id,
+            workspaceId=workspace_id,
+            fileId=_create_random_id(8),
+            userId=user_id,
+            fileName=file_name,
+            size=size,
+            timestampCreated=time.time(),
+            content=content,
+            metadata=metadata,
+            jobId=job_id
+        )
+        await files_collection.insert_one(new_file.dict(exclude_none=True))
+
+        if deleted_old_file:
+            await _remove_detached_files_and_jobs(project_id)
+        
+        await projects_collection.update_one({
+            'projectId': project_id
+        }, {
+            '$set': {
+                'timestampModified': time.time()
+            }
+        })
+
+        return SetFileResponse(fileId=new_file.fileId, success=True)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 # delete file
+class DeleteFileResponse(BaseModel):
+    success: bool
+
 @router.delete("/api/gui/projects/{project_id}/files/{file_name}")
 async def delete_file(project_id, file_name, request: Request):
     try:
@@ -105,6 +164,8 @@ async def delete_file(project_id, file_name, request: Request):
         workspace = await workspaces_collection.find_one({'workspaceId': workspace_id})
         if workspace is None:
             raise Exception(f"No workspace with ID {workspace_id}")
+        _remove_id_field(workspace)
+        workspace = ProtocaasWorkspace(**workspace) # validate workspace
         workspace_role = _get_workspace_role(workspace, user_id)
         if workspace_role != 'admin' and workspace_role != 'editor':
             raise Exception('User does not have permission to delete files in this project')
@@ -117,6 +178,6 @@ async def delete_file(project_id, file_name, request: Request):
         # remove detached files and jobs
         await _remove_detached_files_and_jobs(project_id)
 
-        return {'success': True}
+        return DeleteFileResponse(success=True)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

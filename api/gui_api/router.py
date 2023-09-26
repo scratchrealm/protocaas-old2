@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from .create_job_routes import router as create_job_router
+from .create_job_route import router as create_job_router
 from .project_routes import router as project_router
 from .workspace_routes import router as workspace_router
 from .compute_resource_routes import router as compute_resource_router

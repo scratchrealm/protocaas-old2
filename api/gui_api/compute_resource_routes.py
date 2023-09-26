@@ -1,17 +1,24 @@
+from typing import Union, List, Any
 import os
 import time
+from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Request
 from ..common._get_mongo_client import _get_mongo_client
 from ..common._remove_id_field import _remove_id_field
 from ..common._crypto_keys import _verify_signature
+from ..common.protocaas_types import ProtocaasComputeResource, ProtocaasComputeResourceApp, PubsubSubscription, ProtocaasJob
 from ._authenticate_gui_request import _authenticate_gui_request
 
 
 router = APIRouter()
 
 # get compute resource
+class GetComputeResourceResponse(BaseModel):
+    computeResource: ProtocaasComputeResource
+    success: bool
+
 @router.get("/api/gui/compute_resources/{compute_resource_id}")
-async def get_compute_resource(compute_resource_id, request: Request):
+async def get_compute_resource(compute_resource_id, request: Request) -> GetComputeResourceResponse:
     try:
         client = _get_mongo_client()
         compute_resources_collection = client['protocaas']['computeResources']
@@ -19,11 +26,16 @@ async def get_compute_resource(compute_resource_id, request: Request):
         _remove_id_field(compute_resource)
         if compute_resource is None:
             raise Exception(f"No compute resource with ID {compute_resource_id}")
-        return {'computeResource': compute_resource, 'success': True}
+        compute_resource = ProtocaasComputeResource(**compute_resource) # validate compute resource
+        return GetComputeResourceResponse(computeResource=compute_resource, success=True)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 # get compute resources
+class GetComputeResourcesResponse(BaseModel):
+    computeResources: List[ProtocaasComputeResource]
+    success: bool
+
 @router.get("/api/gui/compute_resources")
 async def get_compute_resources(request: Request):
     try:
@@ -38,28 +50,35 @@ async def get_compute_resources(request: Request):
         compute_resources = await compute_resources_collection.find({'ownerId': user_id}).to_list(length=None)
         for compute_resource in compute_resources:
             _remove_id_field(compute_resource)
-        return {'computeResources': compute_resources, 'success': True}
+        compute_resources = [ProtocaasComputeResource(**compute_resource) for compute_resource in compute_resources] # validate compute resources
+        return GetComputeResourcesResponse(computeResources=compute_resources, success=True)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 # set compute resource apps
+class SetComputeResourceAppsRequest(BaseModel):
+    apps: List[ProtocaasComputeResourceApp]
+
+class SetComputeResourceAppsResponse(BaseModel):
+    success: bool
+
 @router.put("/api/gui/compute_resources/{compute_resource_id}/apps")
-async def set_compute_resource_apps(compute_resource_id, request: Request):
+async def set_compute_resource_apps(compute_resource_id, data: SetComputeResourceAppsRequest, request: Request) -> SetComputeResourceAppsResponse:
     try:
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
 
         # parse the request
-        body = await request.json()
-        apps = body['apps']
+        apps = data.apps
 
         client = _get_mongo_client()
         compute_resources_collection = client['protocaas']['computeResources']
         compute_resource = await compute_resources_collection.find_one({'computeResourceId': compute_resource_id})
         if compute_resource is None:
             raise Exception(f"No compute resource with ID {compute_resource_id}")
-        if compute_resource['ownerId'] != user_id:
+        compute_resource = ProtocaasComputeResource(**compute_resource) # validate compute resource
+        if compute_resource.ownerId != user_id:
             raise Exception('User does not have permission to admin this compute resource')
         
         compute_resources_collection.update_one({'computeResourceId': compute_resource_id}, {
@@ -69,13 +88,16 @@ async def set_compute_resource_apps(compute_resource_id, request: Request):
             }
         })
 
-        return {'success': True}
+        return SetComputeResourceAppsResponse(success=True)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 # delete compute resource
+class DeleteComputeResourceResponse(BaseModel):
+    success: bool
+
 @router.delete("/api/gui/compute_resources/{compute_resource_id}")
-async def delete_compute_resource(compute_resource_id, request: Request):
+async def delete_compute_resource(compute_resource_id, request: Request) -> DeleteComputeResourceResponse:
     try:
         # authenticate the request
         headers = request.headers
@@ -86,16 +108,21 @@ async def delete_compute_resource(compute_resource_id, request: Request):
         compute_resource = await compute_resources_collection.find_one({'computeResourceId': compute_resource_id})
         if compute_resource is None:
             raise Exception(f"No compute resource with ID {compute_resource_id}")
-        if compute_resource['ownerId'] != user_id:
+        compute_resource = ProtocaasComputeResource(**compute_resource) # validate compute resource
+        if compute_resource.ownerId != user_id:
             raise Exception('User does not have permission to delete this compute resource')
         
         compute_resources_collection.delete_one({'computeResourceId': compute_resource_id})
 
-        return {'success': True}
+        return DeleteComputeResourceResponse(success=True)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 # get pubsub subscription
+class GetPubsubSubscriptionResponse(BaseModel):
+    subscription: PubsubSubscription
+    success: bool
+
 @router.get("/api/gui/compute_resources/{compute_resource_id}/pubsub_subscription")
 async def get_pubsub_subscription(compute_resource_id, request: Request):
     try:
@@ -104,21 +131,30 @@ async def get_pubsub_subscription(compute_resource_id, request: Request):
         compute_resource = await compute_resources_collection.find_one({'computeResourceId': compute_resource_id})
         if compute_resource is None:
             raise Exception(f"No compute resource with ID {compute_resource_id}")
+        compute_resource = ProtocaasComputeResource(**compute_resource) # validate compute resource
         VITE_PUBNUB_SUBSCRIBE_KEY = os.environ.get('VITE_PUBNUB_SUBSCRIBE_KEY')
         if VITE_PUBNUB_SUBSCRIBE_KEY is None:
             raise Exception('Environment variable not set: VITE_PUBNUB_SUBSCRIBE_KEY')
-        subscription = {
-            'pubnubSubscribeKey': VITE_PUBNUB_SUBSCRIBE_KEY,
-            'pubnubChannel': compute_resource_id,
-            'pubnubUser': compute_resource_id
-        }
-        return {'subscription': subscription, 'success': True}
+        subscription = PubsubSubscription(
+            pubnubSubscribeKey=VITE_PUBNUB_SUBSCRIBE_KEY,
+            pubnubChannel=compute_resource_id,
+            pubnubUser=compute_resource_id
+        )
+        return GetPubsubSubscriptionResponse(subscription=subscription, success=True)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 # register compute resource
+class RegisterComputeResourceRequest(BaseModel):
+    computeResourceId: str
+    resourceCode: str
+    name: str
+
+class RegisterComputeResourceResponse(BaseModel):
+    success: bool
+
 @router.post("/api/gui/compute_resources/register")
-async def register_compute_resource(request: Request):
+async def register_compute_resource(data: RegisterComputeResourceRequest, request: Request) -> RegisterComputeResourceResponse:
     try:
         # authenticate the request
         headers = request.headers
@@ -127,10 +163,9 @@ async def register_compute_resource(request: Request):
             raise Exception('User is not authenticated')
         
         # parse the request
-        body = await request.json()
-        compute_resource_id = body['computeResourceId']
-        resource_code = body['resourceCode']
-        name = body['name']
+        compute_resource_id = data.computeResourceId
+        resource_code = data.resourceCode
+        name = data.name
         
         client = _get_mongo_client()
         compute_resources_collection = client['protocaas']['computeResources']
@@ -149,21 +184,26 @@ async def register_compute_resource(request: Request):
                 }
             })
         else:
-            compute_resources_collection.insert_one({
-                'computeResourceId': compute_resource_id,
-                'ownerId': user_id,
-                'name': name,
-                'timestampCreated': time.time(),
-                'apps': []
-            })
+            new_compute_resource = ProtocaasComputeResource(
+                computeResourceId=compute_resource_id,
+                ownerId=user_id,
+                name=name,
+                timestampCreated=time.time(),
+                apps=[]
+            )
+            compute_resources_collection.insert_one(new_compute_resource)
         
-        return {'success': True}
+        return RegisterComputeResourceResponse(success=True)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 # get jobs for compute resource
+class GetJobsForComputeResourceResponse(BaseModel):
+    jobs: List[Any]
+    success: bool
+
 @router.get("/api/gui/compute_resources/{compute_resource_id}/jobs")
-async def get_jobs_for_compute_resource(compute_resource_id, request: Request):
+async def get_jobs_for_compute_resource(compute_resource_id, request: Request) -> GetJobsForComputeResourceResponse:
     try:
         # authenticate the request
         headers = request.headers
@@ -174,7 +214,8 @@ async def get_jobs_for_compute_resource(compute_resource_id, request: Request):
         compute_resource = await compute_resources_collection.find_one({'computeResourceId': compute_resource_id})
         if compute_resource is None:
             raise Exception(f"No compute resource with ID {compute_resource_id}")
-        if compute_resource['ownerId'] != user_id:
+        compute_resource = ProtocaasComputeResource(**compute_resource) # validate compute resource
+        if compute_resource.ownerId != user_id:
             raise Exception('User does not have permission to view jobs for this compute resource')
 
         jobs_collection = client['protocaas']['jobs']
@@ -183,8 +224,10 @@ async def get_jobs_for_compute_resource(compute_resource_id, request: Request):
         }).to_list(length=None)
         for job in jobs:
             _remove_id_field(job)
-            job['jobPrivateKey'] = '' # hide the private key
-        return {'jobs': jobs, 'success': True}
+        jobs = [ProtocaasJob(**job) for job in jobs] # validate jobs
+        for job in jobs:
+            job.jobPrivateKey = '' # hide the private key
+        return GetJobsForComputeResourceResponse(jobs=jobs, success=True)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
