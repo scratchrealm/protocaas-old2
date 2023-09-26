@@ -16,13 +16,25 @@ from ._get_workspace_role import _get_workspace_role
 router = APIRouter()
 
 # create job
+class CreateJobRequestInputFile(BaseModel):
+    name: str
+    fileName: str
+
+class CreateJobRequestOutputFile(BaseModel):
+    name: str
+    fileName: str
+
+class CreateJobRequestInputParameter(BaseModel):
+    name: str
+    value: Union[Any, None]
+
 class CreateJobRequest(BaseModel):
     workspaceId: str
     projectId: str
     processorName: str
-    inputFiles: List[ProtocaasJobInputFile]
-    outputFiles: List[ProtocaasJobOutputFile]
-    inputParameters: List[ProtocaasJobInputParameter]
+    inputFiles: List[CreateJobRequestInputFile]
+    outputFiles: List[CreateJobRequestOutputFile]
+    inputParameters: List[CreateJobRequestInputParameter]
     processorSpec: ComputeResourceSpecProcessor
     batchId: Union[str, None] = None
 
@@ -58,7 +70,7 @@ async def create_job_handler(data: CreateJobRequest, request: Request):
         if workspace_role != 'admin' and workspace_role != 'editor':
             raise Exception('User does not have permission to create jobs')
         
-        compute_resource_id = workspace.get('computeResourceId', None)
+        compute_resource_id = workspace.computeResourceId
         if compute_resource_id is None:
             compute_resource_id = os.environ.get('VITE_DEFAULT_COMPUTE_RESOURCE_ID')
             if compute_resource_id is None:
@@ -82,7 +94,7 @@ async def create_job_handler(data: CreateJobRequest, request: Request):
                 'fileName': input_file.fileName
             })
             if file is None:
-                raise Exception(f"Project input file does not exist: {input_file['fileName']}")
+                raise Exception(f"Project input file does not exist: {input_file.fileName}")
             _remove_id_field(file)
             file = ProtocaasFile(**file)
             input_files.append(
@@ -105,7 +117,6 @@ async def create_job_handler(data: CreateJobRequest, request: Request):
             output_files.append(
                 ProtocaasJobOutputFile(
                     name=output_file.name,
-                    fileId=output_file.fileId,
                     fileName=filter_output_file_name(output_file.fileName)
                 )
             )

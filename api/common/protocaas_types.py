@@ -32,7 +32,7 @@ class ProtocaasJobInputFile(BaseModel):
 
 class ProtocaasJobInputParameter(BaseModel):
     name: str
-    value: Union[str, None]=None
+    value: Union[Any, None]=None
 
 class ProtocaasJobOutputFile(BaseModel):
     name: str

@@ -66,7 +66,7 @@ class SetFileResponse(BaseModel):
     fileId: str
     success: bool
 
-@router.put("/api/gui/projects/{project_id}/files/{file_name}")
+@router.put("/api/gui/projects/{project_id}/files/{file_name:path}")
 async def set_file(project_id, file_name, data: SetFileRequest, request: Request):
     try:
         # authenticate the request
@@ -144,7 +144,7 @@ async def set_file(project_id, file_name, data: SetFileRequest, request: Request
 class DeleteFileResponse(BaseModel):
     success: bool
 
-@router.delete("/api/gui/projects/{project_id}/files/{file_name}")
+@router.delete("/api/gui/projects/{project_id}/files/{file_name:path}")
 async def delete_file(project_id, file_name, request: Request):
     try:
         # authenticate the request
