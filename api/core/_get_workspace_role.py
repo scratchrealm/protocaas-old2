@@ -1,5 +1,5 @@
 from typing import Union
-from ..common.protocaas_types import ProtocaasWorkspace
+from .protocaas_types import ProtocaasWorkspace
 
 
 def _get_workspace_role(workspace: ProtocaasWorkspace, user_id: Union[str, None]) -> str:

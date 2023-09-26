@@ -1,10 +1,10 @@
 import time
 import aiohttp
-from ._get_mongo_client import _get_mongo_client
-from ._remove_id_field import _remove_id_field
-from ._create_random_id import _create_random_id
+from ..clients._get_mongo_client import _get_mongo_client
+from ..clients._remove_id_field import _remove_id_field
+from ..core._create_random_id import _create_random_id
 from ._remove_detached_files_and_jobs import _remove_detached_files_and_jobs
-from .protocaas_types import ProtocaasFile, ProtocaasProject
+from ..core.protocaas_types import ProtocaasFile, ProtocaasProject
 
 
 async def _create_output_file(*,

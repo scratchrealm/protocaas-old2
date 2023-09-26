@@ -10,9 +10,9 @@ from .github_auth_routes import router as github_auth_router
 router = APIRouter()
 
 router.include_router(create_job_router)
-router.include_router(project_router)
-router.include_router(workspace_router)
-router.include_router(compute_resource_router)
+router.include_router(project_router, prefix="/projects")
+router.include_router(workspace_router, prefix="/workspaces")
+router.include_router(compute_resource_router, prefix="/compute_resources")
 router.include_router(file_router)
-router.include_router(job_router)
+router.include_router(job_router, prefix="/jobs")
 router.include_router(github_auth_router)

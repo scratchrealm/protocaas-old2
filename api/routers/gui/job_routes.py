@@ -1,11 +1,10 @@
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
-from ..common._get_mongo_client import _get_mongo_client
-from ..common._remove_id_field import _remove_id_field
-from ..common._remove_detached_files_and_jobs import _remove_detached_files_and_jobs
-from ..common.protocaas_types import ProtocaasJob, ProtocaasWorkspace
+from ...services._remove_detached_files_and_jobs import _remove_detached_files_and_jobs
+from ...core.protocaas_types import ProtocaasJob
 from ._authenticate_gui_request import _authenticate_gui_request
-from ._get_workspace_role import _get_workspace_role
+from ...core._get_workspace_role import _get_workspace_role
+from ...clients.db import fetch_job, fetch_workspace, delete_job as db_delete_job
 
 
 router = APIRouter()
@@ -15,19 +14,12 @@ class GetJobResponse(BaseModel):
     job: ProtocaasJob
     success: bool
 
-@router.get("/api/gui/jobs/{job_id}")
+@router.get("/{job_id}")
 async def get_job(job_id, request: Request) -> GetJobResponse:
     try:
-        client = _get_mongo_client()
-        jobs_collection = client['protocaas']['jobs']
-        job = await jobs_collection.find_one({
-            'jobId': job_id
-        })
+        job = await fetch_job(job_id)
         if job is None:
             raise Exception(f"No job with ID {job_id}")
-        _remove_id_field(job)
-        job = ProtocaasJob(**job) # validate job
-        job.jobPrivateKey = '' # hide the private key
         return GetJobResponse(job=job, success=True)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -36,7 +28,7 @@ async def get_job(job_id, request: Request) -> GetJobResponse:
 class DeleteJobResponse(BaseModel):
     success: bool
 
-@router.delete("/api/gui/jobs/{job_id}")
+@router.delete("/{job_id}")
 async def delete_job(job_id, request: Request):
     try:
         # authenticate the request
@@ -45,30 +37,22 @@ async def delete_job(job_id, request: Request):
         if not user_id:
             raise Exception('User is not authenticated')
 
-        client = _get_mongo_client()
-        jobs_collection = client['protocaas']['jobs']
-        job = await jobs_collection.find_one({
-            'jobId': job_id
-        })
+        job = await fetch_job(job_id)
         if job is None:
             raise Exception(f"No job with ID {job_id}")
-        workspace_id = job['workspaceId']
-        workspaces_collection = client['protocaas']['workspaces']
-        workspace = await workspaces_collection.find_one({'workspaceId': workspace_id})
+        
+        workspace_id = job.workspaceId
+        workspace = await fetch_workspace(workspace_id)
         if workspace is None:
             raise Exception(f"No workspace with ID {workspace_id}")
-        _remove_id_field(workspace)
-        workspace = ProtocaasWorkspace(**workspace) # validate workspace
         workspace_role = _get_workspace_role(workspace, user_id)
         if workspace_role != 'admin' and workspace_role != 'editor':
             raise Exception('User does not have permission to delete jobs in this project')
-
-        jobs_collection.delete_one({
-            'jobId': job_id
-        })
+        
+        await db_delete_job(job_id)
 
         # remove detached files and jobs
-        await _remove_detached_files_and_jobs(job['projectId'])
+        await _remove_detached_files_and_jobs(job.projectId)
 
         return DeleteJobResponse(success=True)
     except Exception as e:

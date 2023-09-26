@@ -23,7 +23,7 @@ def _get_pubnub_client():
 
     return client
 
-async def _publish_pubsub_message(*, channel: str, message: dict):
+async def publish_pubsub_message(*, channel: str, message: dict):
     client = _get_pubnub_client()
     envelope = await client.publish().channel(channel).message(message).future()
     return envelope.result

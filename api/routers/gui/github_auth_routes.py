@@ -10,7 +10,7 @@ router = APIRouter()
 class GithubAuthResponse(BaseModel):
     access_token: str
 
-@router.get("/api/github_auth/{code}")
+@router.get("/github_auth/{code}")
 async def github_auth(code, request: Request) -> GithubAuthResponse:
     GITHUB_CLIENT_ID = os.environ.get('VITE_GITHUB_CLIENT_ID')
     GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET')

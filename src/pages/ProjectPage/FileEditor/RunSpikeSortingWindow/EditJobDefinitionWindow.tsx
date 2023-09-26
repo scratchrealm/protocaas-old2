@@ -56,7 +56,6 @@ const EditJobDefinitionWindow: FunctionComponent<EditJobDefinitionWindowProps> =
         const allNames: string[] = [...processor.parameters.map(p => p.name), ...processor.inputs.map(i => i.name), ...processor.outputs.map(o => o.name)]
         for (const name of allNames) {
             if (!validParameters[name]) {
-                console.log('not valid', name)
                 return false
             }
         }

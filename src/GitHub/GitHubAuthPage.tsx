@@ -24,7 +24,7 @@ const GitHubAuthPage: FunctionComponent<Props> = () => {
 	const code = queryParams.code
 	useEffect(() => {
 		(async () => {
-			const rr = await fetch(`/api/github_auth/${code}`)
+			const rr = await fetch(`/api/gui/github_auth/${code}`)
 			const r = await rr.json()
 			if ((!r.access_token) || (r.error)) {
 				setStatus('error')
