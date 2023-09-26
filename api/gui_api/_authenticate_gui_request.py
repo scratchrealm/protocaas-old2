@@ -6,8 +6,8 @@ _user_ids_for_access_tokens = {} # github access token -> {user_id: string, time
 
 async def _authenticate_gui_request(headers: dict):
     github_access_token = headers.get('github-access-token')
-    if github_access_token is None:
-        raise Exception('No github access token')
+    if not github_access_token:
+        return None
     if github_access_token in _user_ids_for_access_tokens:
         a = _user_ids_for_access_tokens[github_access_token]
         elapsed = time.time() - a['timestamp']

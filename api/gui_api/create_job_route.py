@@ -48,6 +48,8 @@ async def create_job_handler(data: CreateJobRequest, request: Request):
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
+        if not user_id:
+            raise Exception('User is not authenticated')
 
         # parse the request
         workspace_id = data.workspaceId

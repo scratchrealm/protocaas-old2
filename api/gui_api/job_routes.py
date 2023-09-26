@@ -42,6 +42,8 @@ async def delete_job(job_id, request: Request):
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
+        if not user_id:
+            raise Exception('User is not authenticated')
 
         client = _get_mongo_client()
         jobs_collection = client['protocaas']['jobs']

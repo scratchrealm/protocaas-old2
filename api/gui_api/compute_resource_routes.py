@@ -68,6 +68,8 @@ async def set_compute_resource_apps(compute_resource_id, data: SetComputeResourc
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
+        if not user_id:
+            raise Exception('User is not authenticated')
 
         # parse the request
         apps = data.apps
@@ -103,6 +105,8 @@ async def delete_compute_resource(compute_resource_id, request: Request) -> Dele
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
+        if not user_id:
+            raise Exception('User is not authenticated')
 
         client = _get_mongo_client()
         compute_resources_collection = client['protocaas']['computeResources']
@@ -211,6 +215,8 @@ async def get_jobs_for_compute_resource(compute_resource_id, request: Request) -
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
+        if not user_id:
+            raise Exception('User is not authenticated')
 
         client = _get_mongo_client()
         compute_resources_collection = client['protocaas']['computeResources']

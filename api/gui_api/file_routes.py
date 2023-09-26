@@ -72,6 +72,8 @@ async def set_file(project_id, file_name, data: SetFileRequest, request: Request
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
+        if not user_id:
+            raise Exception('User not authenticated')
 
         # parse the request
         content = data.content
@@ -150,6 +152,8 @@ async def delete_file(project_id, file_name, request: Request):
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
+        if not user_id:
+            raise Exception('User not authenticated')
 
         client = _get_mongo_client()
         files_collection = client['protocaas']['files']

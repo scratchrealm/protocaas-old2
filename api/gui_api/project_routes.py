@@ -46,6 +46,8 @@ async def create_project(data: CreateProjectRequest, request: Request) -> Create
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
+        if not user_id:
+            raise Exception('User is not authenticated')
 
         # parse the request
         workspace_id = data.workspaceId
@@ -97,6 +99,8 @@ async def set_project_name(project_id, data: SetProjectNameRequest, request: Req
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
+        if not user_id:
+            raise Exception('User is not authenticated')
 
         # parse the request
         name = data.name
@@ -141,6 +145,8 @@ async def delete_project(project_id, request: Request):
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
+        if not user_id:
+            raise Exception('User is not authenticated')
 
         client = _get_mongo_client()
         projects_collection = client['protocaas']['projects']

@@ -27,7 +27,7 @@ async def create_workspace(data: CreateWorkspaceRequest, request: Request):
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
         if not user_id:
-            raise Exception('Unexpected: no user ID')
+            raise Exception('User is not authenticated')
 
         # parse the request
         name = data.name
@@ -116,6 +116,8 @@ async def set_workspace_name(workspace_id, data: SetWorkspaceNameRequest, reques
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
+        if not user_id:
+            raise Exception('User is not authenticated')
 
         # parse the request
         name = data.name
@@ -155,6 +157,8 @@ async def set_workspace_public(workspace_id, data: SetWorkspacePubliclyReadableR
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
+        if not user_id:
+            raise Exception('User is not authenticated')
 
         # parse the request
         publicly_readable = data.publiclyReadable
@@ -194,6 +198,8 @@ async def set_workspace_listed(workspace_id, data: SetWorkspaceListedRequest, re
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
+        if not user_id:
+            raise Exception('User is not authenticated')
 
         # parse the request
         listed = data.listed
@@ -233,6 +239,8 @@ async def set_workspace_compute_resource_id(workspace_id, data: SetWorkspaceComp
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
+        if not user_id:
+            raise Exception('User is not authenticated')
 
         # parse the request
         compute_resource_id = data.computeResourceId
@@ -272,6 +280,8 @@ async def set_workspace_users(workspace_id, data: SetWorkspaceUsersRequest, requ
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
+        if not user_id:
+            raise Exception('User is not authenticated')
 
         # parse the request
         users = data.users
@@ -308,6 +318,8 @@ async def delete_workspace(workspace_id, request: Request):
         # authenticate the request
         headers = request.headers
         user_id = await _authenticate_gui_request(headers)
+        if not user_id:
+            raise Exception('User is not authenticated')
 
         client = _get_mongo_client()
 
