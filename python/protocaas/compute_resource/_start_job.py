@@ -1,21 +1,26 @@
 import os
 import subprocess
 from ..sdk.App import App
-from ..sdk._post_api_request import _post_api_request
 from ._run_job_in_aws_batch import _run_job_in_aws_batch
+from .._api_request import _processor_put_api_request
+from .protocaas_types import ComputeResourceSlurmOpts
 
 
 def _set_job_status_to_starting(*,
     job_id: str,
     job_private_key: str
 ):
-    req = {
-        'type': 'processor.setJobStatus',
-        'jobId': job_id,
-        'jobPrivateKey': job_private_key,
-        'status': 'starting'
+    url_path = f'/api/compute_resource/jobs/{job_id}/status'
+    headers = {
+        'job-private-key': job_private_key
     }
-    resp = _post_api_request(req)
+    resp = _processor_put_api_request(
+        url_path=url_path,
+        headers=headers,
+        data={
+            'status': 'starting'
+        }
+    )
     if not resp['success']:
         raise Exception(f'Error setting job status to starting: {resp["error"]}')
 
@@ -42,7 +47,7 @@ def _start_job(*,
     container: str = app._executable_container
     aws_batch_job_queue: str = app._aws_batch_job_queue
     aws_batch_job_definition: str = app._aws_batch_job_definition
-    slurm_opts: dict = app._slurm_opts
+    slurm_opts: ComputeResourceSlurmOpts = app._slurm_opts
 
     if slurm_opts is not None:
         if run_process:

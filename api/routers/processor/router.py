@@ -1,18 +1,14 @@
-from typing import Union
+from typing import Union, List
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from ...services.processor.update_job_status import update_job_status
 from ...services.processor.get_upload_url import get_upload_url
-from ...core.protocaas_types import ProtocaasJob
-from ...clients.db import fetch_job, update_job
+from ...core.protocaas_types import ProcessorGetJobResponse, ProcessorGetJobResponseInput, ProcessorGetJobResponseOutput, ProcessorGetJobResponseParameter
+from ...clients.db import fetch_job, update_job, fetch_file
 
 router = APIRouter()
 
 # get job
-class ProcessorGetJobResponse(BaseModel):
-    job: ProtocaasJob
-    success: bool
-
 @router.get("/jobs/{job_id}")
 async def processor_get_job(job_id: str, request: Request) -> ProcessorGetJobResponse:
     try:
@@ -25,8 +21,41 @@ async def processor_get_job(job_id: str, request: Request) -> ProcessorGetJobRes
         
         if job.jobPrivateKey != job_private_key:
             raise Exception(f"Invalid job private key for job {job_id}")
+        
+        inputs: List[ProcessorGetJobResponseInput] = []
+        for input in job.inputFiles:
+            file = await fetch_file(project_id=job.projectId, file_name=input.fileName)
+            if file is None:
+                raise Exception(f"Project file not found: {input.fileName}")
+            if not file.content.startswith('url:'):
+                raise Exception(f"Project file {input.fileName} is not a URL")
+            url = file.content[len('url:'):]
+            inputs.append(ProcessorGetJobResponseInput(
+                name=input.name,
+                url=url
+            ))
+        
+        outputs: List[ProcessorGetJobResponseOutput] = []
+        for output in job.outputFiles:
+            outputs.append(ProcessorGetJobResponseOutput(
+                name=output.name
+            ))
+        
+        parameters: List[ProcessorGetJobResponseParameter] = []
+        for parameter in job.inputParameters:
+            parameters.append(ProcessorGetJobResponseParameter(
+                name=parameter.name,
+                value=parameter.value
+            ))
 
-        return ProcessorGetJobResponse(job=job, success=True)
+        return ProcessorGetJobResponse(
+            jobId=job.jobId,
+            status=job.status,
+            processorName=job.processorName,
+            inputs=inputs,
+            outputs=outputs,
+            parameters=parameters
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

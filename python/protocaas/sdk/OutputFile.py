@@ -1,5 +1,5 @@
 import requests
-from ._post_api_request import _post_api_request
+from .._api_request import _processor_get_api_request
 
 
 class OutputFile:
@@ -9,13 +9,14 @@ class OutputFile:
         self._job_private_key = job_private_key
         self._was_set = False
     def set(self, local_file_path: str):
-        req = {
-            'type': 'processor.getOutputUploadUrl',
-            'jobId': self._job_id,
-            'jobPrivateKey': self._job_private_key,
-            'outputName': self._name
+        url_path = f'/api/processor/jobs/{self._job_id}/outputs/{self._name}/upload_url'
+        headers = {
+            'job-private-key': self._job_private_key
         }
-        resp = _post_api_request(req)
+        resp = _processor_get_api_request(
+            url_path=url_path,
+            headers=headers
+        )
         upload_url = resp['uploadUrl'] # This will be a presigned AWS S3 URL
 
         # Upload the file to the URL

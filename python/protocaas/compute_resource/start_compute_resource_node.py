@@ -6,14 +6,14 @@ import subprocess
 from pathlib import Path
 import shutil
 import multiprocessing
+from .._api_request import _compute_resource_get_api_request, _compute_resource_put_api_request
 from .init_compute_resource_node import env_var_keys
 from ..sdk.App import App
-from ..sdk._post_api_request import _post_api_request
 from ..sdk._run_job import _set_job_status
 from .PubsubClient import PubsubClient
-from .crypto_keys import sign_message
 from ..sdk.App import App
 from ._start_job import _start_job
+from .protocaas_types import ProtocaasComputeResourceApp, ComputeResourceSlurmOpts, ProtocaasJob
 
 
 max_simultaneous_local_jobs = 2
@@ -48,15 +48,18 @@ class Daemon:
 
         # Report the compute resource spec
         print('Reporting the compute resource spec')
-        req = {
-            'type': 'computeResource.setSpec',
-            'computeResourceId': self._compute_resource_id,
-            'signature': sign_message({'type': 'computeResource.setSpec'}, self._compute_resource_id, self._compute_resource_private_key),
-            'spec': {
-                'apps': spec_apps
-            }
+        url_path = f'/api/compute_resource/compute_resources/{self._compute_resource_id}/spec'
+        spec = {
+            'apps': spec_apps
         }
-        _post_api_request(req)
+        _compute_resource_put_api_request(
+            url_path=url_path,
+            compute_resource_id=self._compute_resource_id,
+            compute_resource_private_key=self._compute_resource_private_key,
+            data={
+                'spec': spec
+            }
+        )
 
         print('Getting pubsub info')
         pubsub_subscription = get_pubsub_subscription(compute_resource_id=self._compute_resource_id, compute_resource_private_key=self._compute_resource_private_key)
@@ -94,22 +97,20 @@ class Daemon:
 
             time.sleep(1)
     def _handle_jobs(self):
-        signature = sign_message({'type': 'computeResource.getUnfinishedJobs'}, self._compute_resource_id, self._compute_resource_private_key)
-        req = {
-            'type': 'computeResource.getUnfinishedJobs',
-            'computeResourceId': self._compute_resource_id,
-            'signature': signature,
-            'nodeId': self._node_id,
-            'nodeName': self._node_name
-        }
-        resp = _post_api_request(req)
+        url_path = f'/api/compute_resource/compute_resources/{self._compute_resource_id}/unfinished_jobs'
+        resp = _compute_resource_get_api_request(
+            url_path=url_path,
+            compute_resource_id=self._compute_resource_id,
+            compute_resource_private_key=self._compute_resource_private_key
+        )
         jobs = resp['jobs']
+        jobs = [ProtocaasJob(**job) for job in jobs] # validation
 
         # Local jobs
         local_jobs = [job for job in jobs if self._is_local_job(job)]
-        num_non_pending_local_jobs = len([job for job in local_jobs if job['status'] != 'pending'])
+        num_non_pending_local_jobs = len([job for job in local_jobs if job.status != 'pending'])
         if num_non_pending_local_jobs < max_simultaneous_local_jobs:
-            pending_local_jobs = [job for job in local_jobs if job['status'] == 'pending']
+            pending_local_jobs = [job for job in local_jobs if job.status == 'pending']
             pending_local_jobs = _sort_jobs_by_timestamp_created(pending_local_jobs)
             num_to_start = min(max_simultaneous_local_jobs - num_non_pending_local_jobs, len(pending_local_jobs))
             local_jobs_to_start = pending_local_jobs[:num_to_start]
@@ -124,13 +125,13 @@ class Daemon:
         # SLURM jobs
         slurm_jobs = [job for job in jobs if self._is_slurm_job(job) and self._job_is_pending(job)]
         for job in slurm_jobs:
-            processor_name = job['processorName']
+            processor_name = job.processorName
             if processor_name not in self._slurm_job_handlers_by_processor:
                 raise Exception(f'Unexpected: Could not find slurm job handler for processor {processor_name}')
             self._slurm_job_handlers_by_processor[processor_name].add_job(job)
 
-    def _get_job_resource_type(self, job: dict) -> str:
-        processor_name = job['processorName']
+    def _get_job_resource_type(self, job: ProtocaasJob) -> str:
+        processor_name = job.processorName
         app: App = self._find_app_with_processor(processor_name)
         if app is None:
             return None
@@ -140,21 +141,21 @@ class Daemon:
             return 'slurm'
         else:
             return 'local'
-    def _is_local_job(self, job: dict) -> bool:
+    def _is_local_job(self, job: ProtocaasJob) -> bool:
         return self._get_job_resource_type(job) == 'local'
-    def _is_aws_batch_job(self, job: dict) -> bool:
+    def _is_aws_batch_job(self, job: ProtocaasJob) -> bool:
         return self._get_job_resource_type(job) == 'aws_batch'
-    def _is_slurm_job(self, job: dict) -> bool:
+    def _is_slurm_job(self, job: ProtocaasJob) -> bool:
         return self._get_job_resource_type(job) == 'slurm'
-    def _job_is_pending(self, job: dict) -> bool:
-        return job['status'] == 'pending'
-    def _start_job(self, job: dict, run_process: bool = True, return_shell_command: bool = False):
-        job_id = job['jobId']
+    def _job_is_pending(self, job: ProtocaasJob) -> bool:
+        return job.status == 'pending'
+    def _start_job(self, job: ProtocaasJob, run_process: bool = True, return_shell_command: bool = False):
+        job_id = job.jobId
         if job_id in self._attempted_to_start_job_ids:
             return '' # see above comment about why this is necessary
         self._attempted_to_start_job_ids.add(job_id)
-        job_private_key = job['jobPrivateKey']
-        processor_name = job['processorName']
+        job_private_key = job.jobPrivateKey
+        processor_name = job.processorName
         app = self._find_app_with_processor(processor_name)
         if app is None:
             msg = f'Could not find app with processor name {processor_name}'
@@ -185,38 +186,39 @@ class Daemon:
         return None
 
 def _load_apps(*, compute_resource_id: str, compute_resource_private_key: str):
-    signature = sign_message({'type': 'computeResource.getApps'}, compute_resource_id, compute_resource_private_key)
-    req = {
-        'type': 'computeResource.getApps',
-        'computeResourceId': compute_resource_id,
-        'signature': signature
-    }
-    resp = _post_api_request(req)
+    url_path = f'/api/compute_resource/compute_resources/{compute_resource_id}/apps'
+    resp = _compute_resource_get_api_request(
+        url_path=url_path,
+        compute_resource_id=compute_resource_id,
+        compute_resource_private_key=compute_resource_private_key
+    )
+    apps = resp['apps']
+    apps = [ProtocaasComputeResourceApp(**app) for app in apps] # validation
     ret = []
-    for a in resp['apps']:
-        container = a.get('container', None)
-        aws_batch_opts: dict = a.get('awsBatch', None)
-        slurm_opts: dict = a.get('slurm', None)
+    for a in apps:
+        container = a.container
+        aws_batch_opts = a.awsBatch
+        slurm_opts = a.slurm
         s = []
         if container is not None:
             s.append(f'container: {container}')
         if aws_batch_opts is not None:
             if container is None:
-                raise Exception(f'App {a["executablePath"]} has awsBatch but not container')
+                raise Exception(f'App {a.executablePath} has awsBatch but not container')
             if slurm_opts is not None:
-                raise Exception(f'App {a["executablePath"]} has awsBatch opts but also has slurm opts')
-            aws_batch_job_queue = aws_batch_opts.get('jobQueue', None)
-            aws_batch_job_definition = aws_batch_opts.get('jobDefinition', None)
+                raise Exception(f'App {a.executablePath} has awsBatch opts but also has slurm opts')
+            aws_batch_job_queue = aws_batch_opts.jobQueue
+            aws_batch_job_definition = aws_batch_opts.jobDefinition
             s.append(f'awsBatchJobQueue: {aws_batch_job_queue}')
             s.append(f'awsBatchJobDefinition: {aws_batch_job_definition}')
         else:
             aws_batch_job_queue = None
             aws_batch_job_definition = None
         if slurm_opts is not None:
-            slurm_cpus_per_task = slurm_opts.get('cpusPerTask', None)
-            slurm_partition = slurm_opts.get('partition', None)
-            slurm_time = slurm_opts.get('time', None)
-            slurm_other_opts = slurm_opts.get('otherOpts', None)
+            slurm_cpus_per_task = slurm_opts.cpusPerTask
+            slurm_partition = slurm_opts.partition
+            slurm_time = slurm_opts.time
+            slurm_other_opts = slurm_opts.otherOpts
             s.append(f'slurmCpusPerTask: {slurm_cpus_per_task}')
             s.append(f'slurmPartition: {slurm_partition}')
             s.append(f'slurmTime: {slurm_time}')
@@ -226,9 +228,9 @@ def _load_apps(*, compute_resource_id: str, compute_resource_private_key: str):
             slurm_partition = None
             slurm_time = None
             slurm_other_opts = None
-        print(f'Loading app {a["executablePath"]} | {" | ".join(s)}')
+        print(f'Loading app {a.executablePath} | {" | ".join(s)}')
         app = App.from_executable(
-            a['executablePath'],
+            a.executablePath,
             container=container,
             aws_batch_job_queue=aws_batch_job_queue,
             aws_batch_job_definition=aws_batch_job_definition,
@@ -254,17 +256,16 @@ def start_compute_resource_node(dir: str):
     daemon.start()
 
 def get_pubsub_subscription(*, compute_resource_id: str, compute_resource_private_key: str) -> str:
-    signature = sign_message({'type': 'computeResource.getPubsubSubscription'}, compute_resource_id, compute_resource_private_key)
-    req = {
-        'type': 'computeResource.getPubsubSubscription',
-        'computeResourceId': compute_resource_id,
-        'signature': signature
-    }
-    resp = _post_api_request(req)
+    url_path = f'/api/compute_resource/compute_resources/{compute_resource_id}/pubsub_subscription'
+    resp = _compute_resource_get_api_request(
+        url_path=url_path,
+        compute_resource_id=compute_resource_id,
+        compute_resource_private_key=compute_resource_private_key
+    )
     return resp['subscription']
 
-def _sort_jobs_by_timestamp_created(jobs: List[dict]) -> List[dict]:
-    return sorted(jobs, key=lambda job: job['timestampCreated'])
+def _sort_jobs_by_timestamp_created(jobs: List[ProtocaasJob]) -> List[dict]:
+    return sorted(jobs, key=lambda job: job.timestampCreated)
 
 def _cleanup_old_job_working_directories(dir: str):
     """Delete working dirs that are more than 24 hours old"""
@@ -281,14 +282,14 @@ def _cleanup_old_job_working_directories(dir: str):
         time.sleep(60)
 
 class SlurmJobHandler:
-    def __init__(self, daemon: Daemon, slurm_opts: dict):
+    def __init__(self, daemon: Daemon, slurm_opts: ComputeResourceSlurmOpts):
         self._daemon = daemon
         self._slurm_opts = slurm_opts
-        self._jobs = []
+        self._jobs: List[ProtocaasJob] = []
         self._job_ids = set()
         self._time_of_last_job_added = 0
-    def add_job(self, job: dict):
-        job_id = job['jobId']
+    def add_job(self, job: ProtocaasJob):
+        job_id = job.jobId
         if job_id not in self._job_ids:
             self._jobs.append(job)
             self._job_ids.add(job_id)
@@ -306,7 +307,7 @@ class SlurmJobHandler:
             jobs_to_start = self._jobs[:num_jobs_to_start]
             self._jobs = self._jobs[num_jobs_to_start:]
             for job in jobs_to_start:
-                self._job_ids.remove(job['jobId'])
+                self._job_ids.remove(job.jobId)
             self._run_slurm_batch(jobs_to_start)
     def _run_slurm_batch(self, jobs: List[dict]):
         if not os.path.exists('slurm_scripts'):
@@ -330,10 +331,10 @@ class SlurmJobHandler:
             f.write('\n')
         if script_has_at_least_one_job:
             # run the slurm script with srun
-            slurm_cpus_per_task = self._slurm_opts.get('cpusPerTask', None)
-            slurm_partition = self._slurm_opts.get('partition', None)
-            slurm_time = self._slurm_opts.get('time', None)
-            slurm_other_opts = self._slurm_opts.get('otherOpts', None)
+            slurm_cpus_per_task = self._slurm_opts.cpusPerTask
+            slurm_partition = self._slurm_opts.partition
+            slurm_time = self._slurm_opts.time
+            slurm_other_opts = self._slurm_opts.otherOpts
             oo = []
             if slurm_cpus_per_task is not None:
                 oo.append(f'--cpus-per-task={slurm_cpus_per_task}')

@@ -1,15 +1,16 @@
 from typing import List
-from ..sdk._post_api_request import _post_api_request
+from ..compute_resource.protocaas_types import ProtocaasProject, ProtocaasFile, ProtocaasJob
+from .._api_request import _client_get_api_request
 
 
 class Project:
-    def __init__(self, project_data: dict, files_data: List[dict], jobs_data: List[dict]) -> None:
-        self._project_id = project_data['projectId']
-        self._workspace_id = project_data['workspaceId']
-        self._name = project_data['name']
-        self._description = project_data['description']
-        self._timestamp_created = project_data['timestampCreated']
-        self._timestamp_modified = project_data['timestampModified']
+    def __init__(self, project_data: ProtocaasProject, files_data: List[ProtocaasFile], jobs_data: List[ProtocaasJob]) -> None:
+        self._project_id = project_data.projectId
+        self._workspace_id = project_data.workspaceId
+        self._name = project_data.name
+        self._description = project_data.description
+        self._timestamp_created = project_data.timestampCreated
+        self._timestamp_modified = project_data.timestampModified
 
         self._files = [
             ProjectFile(f)
@@ -22,26 +23,17 @@ class Project:
         ]
     def get_file(self, file_name: str) -> 'ProjectFile':
         for f in self._files:
-            if f._file_name == file_name:
+            if f._file_data.fileName == file_name:
                 return f
         raise Exception(f'File not found: {file_name}')
 
 class ProjectFile:
-    def __init__(self, file_data: dict) -> None:
-        self._project_id = file_data['projectId']
-        self._workspace_id = file_data['workspaceId']
-        self._file_id = file_data['fileId']
-        self._user_id = file_data['userId']
-        self._file_name = file_data['fileName']
-        self._size = file_data['size']
-        self._timestamp_created = file_data['timestampCreated']
-        self._content = file_data['content']
-        self._metadata = file_data['metadata']
-        self._job_id = file_data.get('jobId', None)
+    def __init__(self, file_data: ProtocaasFile) -> None:
+        self._file_data = file_data
     def get_url(self) -> str:
-        a = self._content
+        a = self._file_data.content
         if not a.startswith('url:'):
-            raise Exception(f'Unexpected content for file {self._file_name}: {a}')
+            raise Exception(f'Unexpected content for file {self._file_data.fileName}: {a}')
         return a[len('url:'):]
 
 class ProjectFolder:
@@ -82,43 +74,23 @@ class ProjectFolder:
         ]
 
 class ProjectJob:
-    def __init__(self, job_data: dict) -> None:
-        self._project_id = job_data['projectId']
-        self._workspace_id = job_data['workspaceId']
-        self._job_id = job_data['jobId']
-        self._job_private_key = job_data['jobPrivateKey']
-        self._user_id = job_data['userId']
-        self._processor_name = job_data['processorName']
-        self._batch_id = job_data.get('batchId', None)
-        self._input_files = job_data['inputFiles']
-        self._input_file_ids = job_data['inputFileIds']
-        self._input_parameters = job_data['inputParameters']
-        self._output_files = job_data['outputFiles']
-        self._timestamp_created = job_data['timestampCreated']
-        self._compute_resource_id = job_data['computeResourceId']
-        self._status = job_data['status']
-        self._error = job_data.get('error', None)
-        self._process_version = job_data.get('processVersion', None)
-        self._compute_resource_node_id = job_data.get('computeResourceNodeId', None)
-        self._compute_resource_node_name = job_data.get('computeResourceNodeName', None)
-        self._console_output = job_data.get('consoleOutput', None)
-        self._timestamp_queued = job_data.get('timestampQueued', None)
-        self._timestamp_starting = job_data.get('timestampStarting', None)
-        self._timestamp_started = job_data.get('timestampStarted', None)
-        self._timestamp_finished = job_data.get('timestampFinished', None)
-        self._output_file_ids = job_data.get('outputFileIds', None)
-        self._processor_spec = job_data['processorSpec']
+    def __init__(self, job_data: ProtocaasJob) -> None:
+        self._job_data = job_data
 
 def load_project(project_id: str) -> Project:
-    req = {
-        'type': 'client.loadProject',
-        'projectId': project_id
-    }
-    resp = _post_api_request(req)
-    project_data = resp['project']
-    files_data = resp['files']
-    jobs_data = resp['jobs']
-    return Project(project_data, files_data, jobs_data)
+    url_path = f'/api/client/projects/{project_id}'
+    project_resp = _client_get_api_request(url_path=url_path)
+    project: ProtocaasProject = project_resp['project']
+
+    url_path = f'/api/client/projects/{project_id}/files'
+    files_resp = _client_get_api_request(url_path=url_path)
+    files: List[ProtocaasFile] = [ProtocaasFile(**f) for f in files_resp['files']]
+
+    url_path = f'/api/client/projects/{project_id}/jobs'
+    jobs_resp = _client_get_api_request(url_path=url_path)
+    jobs: List[ProtocaasJob] = [ProtocaasJob(**j) for j in jobs_resp['jobs']]
+
+    return Project(project, files, jobs)
 
 # type ProtocaasProject = {
 #     projectId: string

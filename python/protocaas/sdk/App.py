@@ -1,4 +1,4 @@
-from typing import List, Any
+from typing import List, Any, Union
 import os
 import json
 import subprocess
@@ -8,8 +8,10 @@ from dataclasses import dataclass
 from .InputFile import InputFile
 from .OutputFile import OutputFile
 from .AppProcessor import AppProcessor
-from ._post_api_request import _post_api_request
 from ._run_job import _run_job
+from ..compute_resource.protocaas_types import ComputeResourceSlurmOpts
+from ..compute_resource.protocaas_types import ProcessorGetJobResponse
+from .._api_request import _processor_get_api_request
 
 
 @dataclass
@@ -38,7 +40,7 @@ class App:
         self._executable_container: str = None
         self._aws_batch_job_queue: str = None
         self._aws_batch_job_definition: str = None
-        self._slurm_opts: dict = None
+        self._slurm_opts: Union[ComputeResourceSlurmOpts, None] = None
     def add_processor(self, processor_func):
         P = AppProcessor.from_func(processor_func)
         self._processors.append(P)
@@ -94,7 +96,13 @@ class App:
             app._processors.append(processor)
         return app
     @staticmethod
-    def from_executable(executable_path: str, container: str=None, aws_batch_job_queue: str=None, aws_batch_job_definition: str=None, slurm_opts: dict=None):
+    def from_executable(
+        executable_path: str,
+        container: str=None,
+        aws_batch_job_queue: str=None,
+        aws_batch_job_definition: str=None,
+        slurm_opts: ComputeResourceSlurmOpts=None
+    ):
         with TemporaryDirectory() as tmpdir:
             spec_fname = os.path.join(tmpdir, 'spec.json')
             if not container:
@@ -186,17 +194,19 @@ class TemporaryDirectory:
 
 def _get_job(*, job_id: str, job_private_key: str) -> str:
     """Get a job from the protocaas API"""
-    req = {
-        'type': 'processor.getJob',
-        'jobId': job_id,
-        'jobPrivateKey': job_private_key
+    url_path = f'/api/processor/jobs/{job_id}'
+    headers = {
+        'job-private-key': job_private_key
     }
-    res = _post_api_request(req)
+    res: ProcessorGetJobResponse = _processor_get_api_request(
+        url_path=url_path,
+        headers=headers
+    )
     return Job(
         job_id=job_id,
-        status=res['status'],
-        processor_name=res['processorName'],
-        inputs=[InputFile(name=i['name'], url=i['url']) for i in res['inputs']],
-        outputs=[OutputFile(name=o['name'], job_id=job_id, job_private_key=job_private_key) for o in res['outputs']],
-        parameters=[JobParameter(name=p['name'], value=p['value']) for p in res['parameters']]
+        status=res.status,
+        processor_name=res.processorName,
+        inputs=[InputFile(name=i.name, url=i.url) for i in res.inputs],
+        outputs=[OutputFile(name=o.name, job_id=job_id, job_private_key=job_private_key) for o in res.outputs],
+        parameters=[JobParameter(name=p.name, value=p.value) for p in res.parameters]
     )

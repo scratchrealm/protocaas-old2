@@ -3,7 +3,7 @@ import threading
 import queue
 import time
 import subprocess
-from ._post_api_request import _post_api_request
+from .._api_request import _processor_get_api_request, _processor_put_api_request
 
 
 # This function is called internally by the compute resource daemon through the protocaas CLI
@@ -138,37 +138,51 @@ def _run_job(*, job_id: str, job_private_key: str, app_executable: str):
     
 def _get_job_status(*, job_id: str, job_private_key: str) -> str:
     """Get a job from the protocaas API"""
-    req = {
-        'type': 'processor.getJob',
-        'jobId': job_id,
-        'jobPrivateKey': job_private_key
+    url_path = f'/api/processor/jobs/{job_id}/status'
+    headers = {
+        'job-private-key': job_private_key
     }
-    res = _post_api_request(req)
+    res = _processor_get_api_request(
+        url_path=url_path,
+        headers=headers
+    )
     return res['status']
 
 def _set_job_status(*, job_id: str, job_private_key: str, status: str, error: str = None):
     """Set the status of a job in the protocaas API"""
-    req = {
-        'type': 'processor.setJobStatus',
-        'jobId': job_id,
-        'jobPrivateKey': job_private_key,
+    url_path = f'/api/processor/jobs/{job_id}/status'
+    headers = {
+        'job-private-key': job_private_key
+    }
+    data = {
         'status': status
     }
     if error is not None:
-        req['error'] = error
-    resp = _post_api_request(req)
+        data['error'] = error
+    resp = _processor_put_api_request(
+        url_path=url_path,
+        headers=headers,
+        data=data
+    )
     if not resp['success']:
         raise Exception(f'Error setting job status: {resp["error"]}')
 
 def _set_job_console_output(*, job_id: str, job_private_key: str, console_output: str):
     """Set the console output of a job in the protocaas API"""
-    req = {
-        'type': 'processor.setJobConsoleOutput',
-        'jobId': job_id,
-        'jobPrivateKey': job_private_key,
+    url_path = f'/api/processor/jobs/{job_id}/console_output'
+    headers = {
+        'job-private-key': job_private_key
+    }
+    data = {
         'consoleOutput': console_output
     }
-    resp = _post_api_request(req)
+    resp = _processor_put_api_request(
+        url_path=url_path,
+        headers=headers,
+        data=data
+    )
+    if not resp['success']:
+        raise Exception(f'Error setting job console output: {resp["error"]}')
 
 def _debug_log(msg: str):
     # write to protocaas-job.log

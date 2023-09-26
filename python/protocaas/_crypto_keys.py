@@ -1,7 +1,3 @@
-import os
-import base64
-import numpy as np
-
 def sign_message(msg: dict, public_key_hex: str, private_key_hex: str) -> str:
     return _sign_message(msg, public_key_hex, private_key_hex)
 
@@ -19,9 +15,13 @@ def _sha1_of_string(txt: str) -> str:
     return ret
 
 def _sign_message(msg: dict, public_key_hex: str, private_key_hex: str) -> str:
-    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
     msg_json = _deterministic_json_dumps(msg)
-    msg_hash = _sha1_of_string(msg_json)
+    return _sign_message_str(msg_json, public_key_hex, private_key_hex)
+    
+
+def _sign_message_str(msg: str, public_key_hex: str, private_key_hex: str) -> str:
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
+    msg_hash = _sha1_of_string(msg)
     msg_bytes = bytes.fromhex(msg_hash)
     privk = Ed25519PrivateKey.from_private_bytes(bytes.fromhex(private_key_hex))
     pubk = Ed25519PublicKey.from_public_bytes(bytes.fromhex(public_key_hex))
@@ -30,9 +30,12 @@ def _sign_message(msg: dict, public_key_hex: str, private_key_hex: str) -> str:
     return signature
 
 def _verify_signature(msg: dict, public_key_hex: str, signature: str):
-    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
     msg_json = _deterministic_json_dumps(msg)
-    msg_hash = _sha1_of_string(msg_json)
+    return _verify_signature_str(msg_json, public_key_hex, signature)
+
+def _verify_signature_str(msg: str, public_key_hex: str, signature: str):
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+    msg_hash = _sha1_of_string(msg)
     msg_bytes = bytes.fromhex(msg_hash)
     pubk = Ed25519PublicKey.from_public_bytes(bytes.fromhex(public_key_hex))
     try:
