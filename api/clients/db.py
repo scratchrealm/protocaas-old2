@@ -248,7 +248,7 @@ async def set_compute_resource_spec(compute_resource_id: str, spec: ComputeResou
         raise Exception(f"No compute resource with ID {compute_resource_id}")
     await compute_resources_collection.update_one({'computeResourceId': compute_resource_id}, {
         '$set': {
-            'spec': spec
+            'spec': spec.dict(exclude_none=True)
         }
     })
 
