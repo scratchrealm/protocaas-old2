@@ -49,7 +49,7 @@ async def update_job_status(job: ProtocaasJob, status: str, error: Union[str, No
             output_file_ids.append(output_file_id)
             output_file.fileId = output_file_id
         update['outputFileIds'] = output_file_ids
-        update['outputFiles'] = job.outputFiles
+        update['outputFiles'] = [f.dict(exclude_none=True) for f in job.outputFiles]
 
     update['status'] = new_status
     if new_error:

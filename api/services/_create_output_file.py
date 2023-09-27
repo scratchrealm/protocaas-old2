@@ -52,7 +52,7 @@ async def _create_output_file(*,
         fileName=file_name,
         size=size,
         timestampCreated=time.time(),
-        content=url,
+        content=f'url:{url}',
         metadata={},
         jobId=job_id
     )

@@ -1,29 +1,25 @@
-import asyncio
 import os
-from pubnub.pnconfiguration import PNConfiguration
-from pubnub.pubnub_asyncio import PubNubAsyncio
-
-
-def _get_pubnub_client():
-    # We want one pubnub client per event loop
-    loop = asyncio.get_event_loop()
-    if hasattr(loop, '_pubnub_client'):
-        return loop._pubnub_client
-    
-    # Otherwise, create a new client and store it in the global variable
-
-    pnconfig = PNConfiguration()
-    pnconfig.subscribe_key = os.environ.get("VITE_PUBNUB_SUBSCRIBE_KEY")
-    pnconfig.publish_key = os.environ.get("PUBNUB_PUBLISH_KEY")
-    pnconfig.uuid = 'protocaas2'
-    
-    client = PubNubAsyncio(pnconfig)
-    
-    setattr(loop, '_pubnub_client', client)
-
-    return client
+import json
+import aiohttp
+import urllib.parse
 
 async def publish_pubsub_message(*, channel: str, message: dict):
-    client = _get_pubnub_client()
-    envelope = await client.publish().channel(channel).message(message).future()
-    return envelope.result
+    # see https://www.pubnub.com/docs/sdks/rest-api/publish-message-to-channel
+    sub_key = os.environ.get("VITE_PUBNUB_SUBSCRIBE_KEY")
+    pub_key = os.environ.get("PUBNUB_PUBLISH_KEY")
+    uuid = 'protocaas2'
+    # payload is url encoded json
+    payload = json.dumps(message)
+    payload = urllib.parse.quote(payload)
+    url = f"https://ps.pndsn.com/publish/{pub_key}/{sub_key}/0/{channel}/0/{payload}?uuid={uuid}"
+
+    headers = {
+    'Accept': 'application/json'
+    }
+
+    # async http get request
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as resp:
+            if resp.status != 200:
+                raise Exception(f"Error publishing to pubsub: {resp.status} {resp.text}")
+            return True
