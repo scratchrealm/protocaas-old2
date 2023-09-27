@@ -198,15 +198,16 @@ def _get_job(*, job_id: str, job_private_key: str) -> str:
     headers = {
         'job-private-key': job_private_key
     }
-    res: ProcessorGetJobResponse = _processor_get_api_request(
+    resp_dict = _processor_get_api_request(
         url_path=url_path,
         headers=headers
     )
+    resp = ProcessorGetJobResponse(**resp_dict)
     return Job(
         job_id=job_id,
-        status=res.status,
-        processor_name=res.processorName,
-        inputs=[InputFile(name=i.name, url=i.url) for i in res.inputs],
-        outputs=[OutputFile(name=o.name, job_id=job_id, job_private_key=job_private_key) for o in res.outputs],
-        parameters=[JobParameter(name=p.name, value=p.value) for p in res.parameters]
+        status=resp.status,
+        processor_name=resp.processorName,
+        inputs=[InputFile(name=i.name, url=i.url) for i in resp.inputs],
+        outputs=[OutputFile(name=o.name, job_id=job_id, job_private_key=job_private_key) for o in resp.outputs],
+        parameters=[JobParameter(name=p.name, value=p.value) for p in resp.parameters]
     )

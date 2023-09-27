@@ -28,7 +28,12 @@ class Daemon:
             raise ValueError('Compute resource has not been initialized in this directory, and the environment variable COMPUTE_RESOURCE_ID is not set.')
         if self._compute_resource_private_key is None:
             raise ValueError('Compute resource has not been initialized in this directory, and the environment variable COMPUTE_RESOURCE_PRIVATE_KEY is not set.')
-        self._apps: List[App] = _load_apps(compute_resource_id=self._compute_resource_id, compute_resource_private_key=self._compute_resource_private_key)
+        self._apps: List[App] = _load_apps(
+            compute_resource_id=self._compute_resource_id,
+            compute_resource_private_key=self._compute_resource_private_key,
+            compute_resource_node_name=self._node_name,
+            compute_resource_node_id=self._node_id
+        )
 
         # important to keep track of which jobs we attempted to start
         # so that we don't attempt multiple times in the case where starting failed
@@ -62,7 +67,12 @@ class Daemon:
         )
 
         print('Getting pubsub info')
-        pubsub_subscription = get_pubsub_subscription(compute_resource_id=self._compute_resource_id, compute_resource_private_key=self._compute_resource_private_key)
+        pubsub_subscription = get_pubsub_subscription(
+            compute_resource_id=self._compute_resource_id,
+            compute_resource_private_key=self._compute_resource_private_key,
+            compute_resource_node_name=self._node_name,
+            compute_resource_node_id=self._node_id
+        )
         self._pubsub_client = PubsubClient(
             pubnub_subscribe_key=pubsub_subscription['pubnubSubscribeKey'],
             pubnub_channel=pubsub_subscription['pubnubChannel'],
@@ -101,7 +111,9 @@ class Daemon:
         resp = _compute_resource_get_api_request(
             url_path=url_path,
             compute_resource_id=self._compute_resource_id,
-            compute_resource_private_key=self._compute_resource_private_key
+            compute_resource_private_key=self._compute_resource_private_key,
+            compute_resource_node_name=self._node_name,
+            compute_resource_node_id=self._node_id
         )
         jobs = resp['jobs']
         jobs = [ProtocaasJob(**job) for job in jobs] # validation
@@ -185,12 +197,14 @@ class Daemon:
                     return app
         return None
 
-def _load_apps(*, compute_resource_id: str, compute_resource_private_key: str):
+def _load_apps(*, compute_resource_id: str, compute_resource_private_key: str, compute_resource_node_name: str=None, compute_resource_node_id: str=None) -> List[App]:
     url_path = f'/api/compute_resource/compute_resources/{compute_resource_id}/apps'
     resp = _compute_resource_get_api_request(
         url_path=url_path,
         compute_resource_id=compute_resource_id,
-        compute_resource_private_key=compute_resource_private_key
+        compute_resource_private_key=compute_resource_private_key,
+        compute_resource_node_name=compute_resource_node_name,
+        compute_resource_node_id=compute_resource_node_id
     )
     apps = resp['apps']
     apps = [ProtocaasComputeResourceApp(**app) for app in apps] # validation
@@ -255,12 +269,14 @@ def start_compute_resource_node(dir: str):
     daemon = Daemon(dir=dir)
     daemon.start()
 
-def get_pubsub_subscription(*, compute_resource_id: str, compute_resource_private_key: str) -> str:
+def get_pubsub_subscription(*, compute_resource_id: str, compute_resource_private_key: str, compute_resource_node_name: str=None, compute_resource_node_id: str=None):
     url_path = f'/api/compute_resource/compute_resources/{compute_resource_id}/pubsub_subscription'
     resp = _compute_resource_get_api_request(
         url_path=url_path,
         compute_resource_id=compute_resource_id,
-        compute_resource_private_key=compute_resource_private_key
+        compute_resource_private_key=compute_resource_private_key,
+        compute_resource_node_name=compute_resource_node_name,
+        compute_resource_node_id=compute_resource_node_id
     )
     return resp['subscription']
 

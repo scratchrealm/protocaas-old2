@@ -7,7 +7,9 @@ protocaas_url = os.getenv('PROTOCAAS_URL', 'https://protocaas2.vercel.app')
 def _compute_resource_get_api_request(*,
     url_path: str,
     compute_resource_id: str,
-    compute_resource_private_key: str
+    compute_resource_private_key: str,
+    compute_resource_node_name: str,
+    compute_resource_node_id: str
 ):
     payload = url_path
     signature = _sign_message_str(payload, compute_resource_id, compute_resource_private_key)
@@ -15,7 +17,9 @@ def _compute_resource_get_api_request(*,
     headers = {
         'compute-resource-id': compute_resource_id,
         'compute-resource-payload': payload,
-        'compute-resource-signature': signature
+        'compute-resource-signature': signature,
+        'compute-resource-node-name': compute_resource_node_name,
+        'compute-resource-node-id': compute_resource_node_id
     }
 
     url = f'{protocaas_url}{url_path}'
@@ -78,10 +82,11 @@ def _processor_get_api_request(*,
 
 def _processor_put_api_request(*,
     url_path: str,
-    headers: dict
+    headers: dict,
+    data: dict
 ):
     url = f'{protocaas_url}{url_path}'
-    resp = requests.put(url, headers=headers)
+    resp = requests.put(url, headers=headers, json=data)
     if resp.status_code != 200:
         raise Exception(f'Error putting {url}: {resp.status_code} {resp.text}')
     return resp.json()

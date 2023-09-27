@@ -36,18 +36,18 @@ async def update_job_status(job: ProtocaasJob, status: str, error: Union[str, No
         if output_bucket_base_url is None:
             raise Exception('Environment variable not set: OUTPUT_BUCKET_BASE_URL')
         output_file_ids = []
-        for output_file in job['outputFiles']:
-            output_file_url = f"{output_bucket_base_url}/protocaas-outputs/{job.jobId}/{output_file['name']}"
+        for output_file in job.outputFiles:
+            output_file_url = f"{output_bucket_base_url}/protocaas-outputs/{job.jobId}/{output_file.name}"
             output_file_id = await _create_output_file(
-                file_name=output_file['fileName'],
+                file_name=output_file.fileName,
                 url=output_file_url,
-                workspace_id=job['workspaceId'],
-                project_id=job['projectId'],
-                user_id=job['userId'],
-                job_id=job['jobId']
+                workspace_id=job.workspaceId,
+                project_id=job.projectId,
+                user_id=job.userId,
+                job_id=job.jobId
             )
             output_file_ids.append(output_file_id)
-            output_file['fileId'] = output_file_id
+            output_file.fileId = output_file_id
         update['outputFileIds'] = output_file_ids
         update['outputFiles'] = job.outputFiles
 
@@ -67,16 +67,16 @@ async def update_job_status(job: ProtocaasJob, status: str, error: Union[str, No
 
     # if update is non-empty, then update the job
     if len(update) > 0:
-        await update_job(job_id=job['jobId'], update=update)
+        await update_job(job_id=job.jobId, update=update)
 
     await publish_pubsub_message(
-        channel=job['computeResourceId'],
+        channel=job.computeResourceId,
         message={
             'type': 'jobStatusChanged',
-            'workspaceId': job['workspaceId'],
-            'projectId': job['projectId'],
-            'computeResourceId': job['computeResourceId'],
-            'jobId': job['jobId'],
+            'workspaceId': job.workspaceId,
+            'projectId': job.projectId,
+            'computeResourceId': job.computeResourceId,
+            'jobId': job.jobId,
             'status': new_status
         }
     )

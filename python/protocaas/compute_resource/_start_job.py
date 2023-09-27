@@ -10,7 +10,7 @@ def _set_job_status_to_starting(*,
     job_id: str,
     job_private_key: str
 ):
-    url_path = f'/api/compute_resource/jobs/{job_id}/status'
+    url_path = f'/api/processor/jobs/{job_id}/status'
     headers = {
         'job-private-key': job_private_key
     }

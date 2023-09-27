@@ -76,7 +76,7 @@ async def processor_update_job_status(job_id: str, data: ProcessorUpdateJobStatu
         if job.jobPrivateKey != request.headers['job-private-key']:
             raise Exception(f"Invalid job private key for job {job_id}")
         
-        await update_job_status(job=job, status=request.status, error=request.error)
+        await update_job_status(job=job, status=data.status, error=data.error)
 
         return ProcessorUpdateJobStatusResponse(success=True)
     except Exception as e:
