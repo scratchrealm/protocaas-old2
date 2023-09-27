@@ -91,10 +91,8 @@ def _run_job(*, job_id: str, job_private_key: str, app_executable: str):
             elapsed = time.time() - last_check_job_exists_time
             if elapsed > 30:
                 last_check_job_exists_time = time.time()
-                # this should throw an exception if the job does not exist
-                try:
-                    job_status = _get_job_status(job_id=job_id, job_private_key=job_private_key)
-                except:
+                job_status = _get_job_status(job_id=job_id, job_private_key=job_private_key)
+                if job_status is None:
                     raise ValueError('Job does not exist (was probably canceled)')
                 if job_status != 'running':
                     raise ValueError(f'Unexpected job status: {job_status}')

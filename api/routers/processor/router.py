@@ -82,6 +82,24 @@ async def processor_update_job_status(job_id: str, data: ProcessorUpdateJobStatu
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# get job status
+class ProcessorGetJobStatusResponse(BaseModel):
+    status: Union[str, None] # return None if job does not exist
+    success: bool
+
+@router.get("/jobs/{job_id}/status")
+async def processor_get_job_status(job_id: str, request: Request) -> ProcessorGetJobStatusResponse:
+    try:
+        job = await fetch_job(job_id)
+        if job is None:
+            return ProcessorGetJobStatusResponse(status=None, success=True)
+        if job.jobPrivateKey != request.headers['job-private-key']:
+            raise Exception(f"Invalid job private key for job {job_id}")
+        
+        return ProcessorGetJobStatusResponse(status=job.status, success=True)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # set job console output
 class ProcessorSetJobConsoleOutputRequest(BaseModel):
     consoleOutput: str

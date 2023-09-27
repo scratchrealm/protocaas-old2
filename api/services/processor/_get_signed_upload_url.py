@@ -2,7 +2,7 @@ import boto3
 import json
 
 
-def _get_signed_upload_url(*,
+async def _get_signed_upload_url(*,
     bucket_uri: str,
     bucket_credentials: str,
     object_key: str
