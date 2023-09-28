@@ -7,7 +7,7 @@ async def publish_pubsub_message(*, channel: str, message: dict):
     # see https://www.pubnub.com/docs/sdks/rest-api/publish-message-to-channel
     sub_key = os.environ.get("VITE_PUBNUB_SUBSCRIBE_KEY")
     pub_key = os.environ.get("PUBNUB_PUBLISH_KEY")
-    uuid = 'protocaas2'
+    uuid = 'protocaas'
     # payload is url encoded json
     payload = json.dumps(message)
     payload = urllib.parse.quote(payload)

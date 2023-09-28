@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import Markdown from "../../Markdown/Markdown";
+// import Markdown from "../../Markdown/Markdown";
 
 type Props = {
     width: number
@@ -34,7 +34,7 @@ type Props = {
 const AboutPage: FunctionComponent<Props> = ({width, height}) => {
     return (
         <div>
-            <a href="https://github.com/scratchrealm/protocaas2" target="_blank" rel="noreferrer">
+            <a href="https://github.com/scratchrealm/protocaas" target="_blank" rel="noreferrer">
                 Visit the GitHub repo
             </a>
         </div>
