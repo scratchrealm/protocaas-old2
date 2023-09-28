@@ -26,5 +26,8 @@ async def github_auth(code, request: Request) -> GithubAuthResponse:
         async with session.get(url, headers=headers) as resp:
             r = await resp.json()
             if 'access_token' not in r:
-                raise Exception(f'No access_token in response: {r["error"]} ({r["error_description"]})')
+                print('No access_token in response from github auth')
+                print(url)
+                print(r)
+                raise Exception(f'No access_token in response: {r.get("error")} ({r.get("error_description")}')
             return GithubAuthResponse(access_token=r['access_token'])
