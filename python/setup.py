@@ -28,7 +28,8 @@ setup(
         'numpy',
         'PyYAML',
         'remfile',
-        'pubnub>=7.2.0'
+        'pubnub>=7.2.0',
+        'pydantic'
     ],
     entry_points={
         "console_scripts": [

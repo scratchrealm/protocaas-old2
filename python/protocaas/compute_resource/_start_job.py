@@ -2,8 +2,8 @@ import os
 import subprocess
 from ..sdk.App import App
 from ._run_job_in_aws_batch import _run_job_in_aws_batch
-from .._api_request import _processor_put_api_request
-from .protocaas_types import ComputeResourceSlurmOpts
+from ..common._api_request import _processor_put_api_request
+from ..common.protocaas_types import ComputeResourceSlurmOpts
 
 
 def _set_job_status_to_starting(*,

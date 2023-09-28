@@ -9,9 +9,9 @@ from .InputFile import InputFile
 from .OutputFile import OutputFile
 from .AppProcessor import AppProcessor
 from ._run_job import _run_job
-from ..compute_resource.protocaas_types import ComputeResourceSlurmOpts
-from ..compute_resource.protocaas_types import ProcessorGetJobResponse
-from .._api_request import _processor_get_api_request
+from ..common.protocaas_types import ComputeResourceSlurmOpts
+from ..common.protocaas_types import ProcessorGetJobResponse
+from ..common._api_request import _processor_get_api_request
 
 
 @dataclass

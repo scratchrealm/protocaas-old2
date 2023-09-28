@@ -3,7 +3,7 @@ import socket
 import time
 import yaml
 from typing import Optional
-from .._crypto_keys import sign_message, generate_keypair
+from ..common._crypto_keys import sign_message, generate_keypair
 
 
 env_var_keys = [

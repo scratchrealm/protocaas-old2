@@ -1,5 +1,5 @@
 import requests
-from .._api_request import _processor_get_api_request
+from ..common._api_request import _processor_get_api_request
 
 
 class OutputFile:

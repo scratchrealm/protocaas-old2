@@ -6,14 +6,14 @@ import subprocess
 from pathlib import Path
 import shutil
 import multiprocessing
-from .._api_request import _compute_resource_get_api_request, _compute_resource_put_api_request
+from ..common._api_request import _compute_resource_get_api_request, _compute_resource_put_api_request
 from .init_compute_resource_node import env_var_keys
 from ..sdk.App import App
 from ..sdk._run_job import _set_job_status
 from .PubsubClient import PubsubClient
 from ..sdk.App import App
 from ._start_job import _start_job
-from .protocaas_types import ProtocaasComputeResourceApp, ComputeResourceSlurmOpts, ProtocaasJob
+from ..common.protocaas_types import ProtocaasComputeResourceApp, ComputeResourceSlurmOpts, ProtocaasJob
 
 
 max_simultaneous_local_jobs = 2

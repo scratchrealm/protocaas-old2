@@ -1,6 +1,6 @@
 from typing import List
-from ..compute_resource.protocaas_types import ProtocaasProject, ProtocaasFile, ProtocaasJob
-from .._api_request import _client_get_api_request
+from ..common.protocaas_types import ProtocaasProject, ProtocaasFile, ProtocaasJob
+from ..common._api_request import _client_get_api_request
 
 
 class Project:

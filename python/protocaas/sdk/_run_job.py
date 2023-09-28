@@ -3,7 +3,7 @@ import threading
 import queue
 import time
 import subprocess
-from .._api_request import _processor_get_api_request, _processor_put_api_request
+from ..common._api_request import _processor_get_api_request, _processor_put_api_request
 
 
 # This function is called internally by the compute resource daemon through the protocaas CLI
