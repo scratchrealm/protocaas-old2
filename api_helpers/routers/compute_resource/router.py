@@ -1,7 +1,7 @@
 import os
 from typing import List
 from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Header
 from ...services._crypto_keys import _verify_signature_str
 from ...core.protocaas_types import ProtocaasComputeResourceApp, ProtocaasJob, ComputeResourceSpec, PubsubSubscription
 from ...clients.db import fetch_compute_resource, fetch_compute_resource_jobs, update_compute_resource_node, set_compute_resource_spec
@@ -14,12 +14,20 @@ class GetAppsResponse(BaseModel):
     success: bool
 
 @router.get("/compute_resources/{compute_resource_id}/apps")
-async def compute_resource_get_apps(compute_resource_id, request: Request) -> GetAppsResponse:
+async def compute_resource_get_apps(
+    compute_resource_id: str,
+    compute_resource_payload: str = Header(...),
+    compute_resource_signature: str = Header(...)
+) -> GetAppsResponse:
     try:
         # authenticate the request
-        headers = request.headers
         expected_payload = f'/api/compute_resource/compute_resources/{compute_resource_id}/apps'
-        _authenticate_compute_resource_request(headers, compute_resource_id, expected_payload)
+        _authenticate_compute_resource_request(
+            compute_resource_id=compute_resource_id,
+            compute_resource_payload=compute_resource_payload,
+            compute_resource_signature=compute_resource_signature,
+            expected_payload=expected_payload
+        )
 
         compute_resource = await fetch_compute_resource(compute_resource_id)
         if compute_resource is None:
@@ -35,12 +43,20 @@ class GetPubsubSubscriptionResponse(BaseModel):
     success: bool
 
 @router.get("/compute_resources/{compute_resource_id}/pubsub_subscription")
-async def compute_resource_get_pubsub_subscription(compute_resource_id, request: Request) -> GetPubsubSubscriptionResponse:
+async def compute_resource_get_pubsub_subscription(
+    compute_resource_id: str,
+    compute_resource_payload: str = Header(...),
+    compute_resource_signature: str = Header(...)
+):
     try:
         # authenticate the request
-        headers = request.headers
         expected_payload = f'/api/compute_resource/compute_resources/{compute_resource_id}/pubsub_subscription'
-        _authenticate_compute_resource_request(headers, compute_resource_id, expected_payload)
+        _authenticate_compute_resource_request(
+            compute_resource_id=compute_resource_id,
+            compute_resource_payload=compute_resource_payload,
+            compute_resource_signature=compute_resource_signature,
+            expected_payload=expected_payload
+        )
 
         compute_resource = await fetch_compute_resource(compute_resource_id)
         if compute_resource is None:
@@ -63,15 +79,22 @@ class GetUnfinishedJobsResponse(BaseModel):
     success: bool
 
 @router.get("/compute_resources/{compute_resource_id}/unfinished_jobs")
-async def compute_resource_get_unfinished_jobs(compute_resource_id, request: Request) -> GetUnfinishedJobsResponse:
+async def compute_resource_get_unfinished_jobs(
+    compute_resource_id: str,
+    compute_resource_payload: str = Header(...),
+    compute_resource_signature: str = Header(...),
+    compute_resource_node_id: str = Header(...),
+    compute_resource_node_name: str = Header(...)
+) -> GetUnfinishedJobsResponse:
     try:
         # authenticate the request
-        headers = request.headers
         expected_payload = f'/api/compute_resource/compute_resources/{compute_resource_id}/unfinished_jobs'
-        _authenticate_compute_resource_request(headers, compute_resource_id, expected_payload)
-
-        compute_resource_node_id = headers['compute-resource-node-id']
-        compute_resource_node_name = headers['compute-resource-node-name']
+        _authenticate_compute_resource_request(
+            compute_resource_id=compute_resource_id,
+            compute_resource_payload=compute_resource_payload,
+            compute_resource_signature=compute_resource_signature,
+            expected_payload=expected_payload
+        )
 
         jobs = await fetch_compute_resource_jobs(compute_resource_id, statuses=['pending', 'queued', 'starting', 'running'], include_private_keys=True)
 
@@ -93,12 +116,21 @@ class SetSpecResponse(BaseModel):
     success: bool
 
 @router.put("/compute_resources/{compute_resource_id}/spec")
-async def compute_resource_set_spec(compute_resource_id, data: SetSpecRequest, request: Request) -> SetSpecResponse:
+async def compute_resource_set_spec(
+    compute_resource_id,
+    data: SetSpecRequest,
+    compute_resource_payload: str = Header(...),
+    compute_resource_signature: str = Header(...)
+) -> SetSpecResponse:
     try:
         # authenticate the request
-        headers = request.headers
         expected_payload = f'/api/compute_resource/compute_resources/{compute_resource_id}/spec'
-        _authenticate_compute_resource_request(headers, compute_resource_id, expected_payload)
+        _authenticate_compute_resource_request(
+            compute_resource_id=compute_resource_id,
+            compute_resource_payload=compute_resource_payload,
+            compute_resource_signature=compute_resource_signature,
+            expected_payload=expected_payload
+        )
 
         spec = data.spec
 
@@ -108,12 +140,12 @@ async def compute_resource_set_spec(compute_resource_id, data: SetSpecRequest, r
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-def _authenticate_compute_resource_request(headers: dict, expected_compute_resource_id: str, expected_payload: str):
-    compute_resource_id = headers['compute-resource-id']
-    compute_resource_payload = headers['compute-resource-payload']
-    compute_resource_signature = headers['compute-resource-signature']
-    if compute_resource_id != expected_compute_resource_id:
-        raise Exception('Unexpected compute resource ID')
+def _authenticate_compute_resource_request(
+    compute_resource_id: str,
+    compute_resource_payload: str,
+    compute_resource_signature: str,
+    expected_payload: str
+):
     if compute_resource_payload != expected_payload:
         raise Exception('Unexpected payload')
     if not _verify_signature_str(compute_resource_payload, compute_resource_id, compute_resource_signature):

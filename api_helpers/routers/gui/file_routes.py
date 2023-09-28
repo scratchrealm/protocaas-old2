@@ -1,6 +1,6 @@
 from typing import Union, List
 from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Header
 from ...services._remove_detached_files_and_jobs import _remove_detached_files_and_jobs
 from ...core.protocaas_types import ProtocaasFile
 from ._authenticate_gui_request import _authenticate_gui_request
@@ -16,7 +16,7 @@ class GetFileResponse(BaseModel):
     success: bool
 
 @router.get("/projects/{project_id}/files/{file_name:path}")
-async def get_file(project_id, file_name, request: Request):
+async def get_file(project_id, file_name):
     try:
         file = await fetch_file(project_id, file_name)
         if file is None:
@@ -31,7 +31,7 @@ class GetFilesResponse(BaseModel):
     success: bool
 
 @router.get("/projects/{project_id}/files")
-async def get_files(project_id, request: Request):
+async def get_files(project_id):
     try:
         files = await fetch_project_files(project_id)
         return GetFilesResponse(files=files, success=True)
@@ -50,11 +50,10 @@ class SetFileResponse(BaseModel):
     success: bool
 
 @router.put("/projects/{project_id}/files/{file_name:path}")
-async def set_file(project_id, file_name, data: SetFileRequest, request: Request):
+async def set_file(project_id, file_name, data: SetFileRequest, github_access_token: str=Header(...)):
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if not user_id:
             raise Exception('User not authenticated')
 
@@ -87,11 +86,10 @@ class DeleteFileResponse(BaseModel):
     success: bool
 
 @router.delete("/projects/{project_id}/files/{file_name:path}")
-async def delete_file(project_id, file_name, request: Request):
+async def delete_file(project_id, file_name, github_access_token: str=Header(...)):
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if not user_id:
             raise Exception('User not authenticated')
         

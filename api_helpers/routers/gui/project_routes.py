@@ -1,6 +1,6 @@
 from typing import List
 import time
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from ...core._create_random_id import _create_random_id
 from ...core.protocaas_types import ProtocaasJob, ProtocaasProject
@@ -18,7 +18,7 @@ class GetProjectReponse(BaseModel):
     success: bool
 
 @router.get("/{project_id}")
-async def get_project(project_id, request: Request):
+async def get_project(project_id):
     try:
         project = await fetch_project(project_id)
         if project is None:
@@ -37,11 +37,10 @@ class CreateProjectResponse(BaseModel):
     success: bool
 
 @router.post("")
-async def create_project(data: CreateProjectRequest, request: Request) -> CreateProjectResponse:
+async def create_project(data: CreateProjectRequest, github_access_token: str=Header(...)) -> CreateProjectResponse:
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if not user_id:
             raise Exception('User is not authenticated')
 
@@ -82,11 +81,10 @@ class SetProjectNameResponse(BaseModel):
     success: bool
 
 @router.put("/{project_id}/name")
-async def set_project_name(project_id, data: SetProjectNameRequest, request: Request) -> SetProjectNameResponse:
+async def set_project_name(project_id, data: SetProjectNameRequest, github_access_token: str=Header(...)) -> SetProjectNameResponse:
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if not user_id:
             raise Exception('User is not authenticated')
         
@@ -121,11 +119,10 @@ class DeleteProjectResponse(BaseModel):
     success: bool
 
 @router.delete("/{project_id}")
-async def delete_project(project_id, request: Request):
+async def delete_project(project_id, github_access_token: str=Header(...)) -> DeleteProjectResponse:
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if not user_id:
             raise Exception('User is not authenticated')
         
@@ -151,7 +148,7 @@ class GetJobsResponse(BaseModel):
     success: bool
 
 @router.get("/{project_id}/jobs")
-async def get_jobs(project_id, request: Request):
+async def get_jobs(project_id):
     try:
         jobs = await fetch_project_jobs(project_id, include_private_keys=False)
         return GetJobsResponse(jobs=jobs, success=True)

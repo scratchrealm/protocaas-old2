@@ -1,6 +1,6 @@
 from typing import List
 import time
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from ...core.protocaas_types import ProtocaasWorkspace, ProtocaasWorkspaceUser, ProtocaasProject
 from ._authenticate_gui_request import _authenticate_gui_request
@@ -21,11 +21,10 @@ class CreateWorkspaceResponse(BaseModel):
     success: bool
 
 @router.post("")
-async def create_workspace(data: CreateWorkspaceRequest, request: Request):
+async def create_workspace(data: CreateWorkspaceRequest, github_access_token: str=Header(...)) -> CreateWorkspaceResponse:
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if not user_id:
             raise Exception('User is not authenticated')
 
@@ -44,10 +43,9 @@ class GetWorkspaceResponse(BaseModel):
     success: bool
 
 @router.get("/{workspace_id}")
-async def get_workspace(workspace_id, request: Request):
+async def get_workspace(workspace_id, github_access_token: str=Header(...)):
     try:
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
 
         workspace = await fetch_workspace(workspace_id)
         if workspace is None:
@@ -67,10 +65,9 @@ class GetWorkspacesResponse(BaseModel):
     success: bool
 
 @router.get("")
-async def get_workspaces(request: Request):
+async def get_workspaces(github_access_token: str=Header(...)):
     try:
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
 
         workspaces = await fetch_workspaces_for_user(user_id)
 
@@ -86,11 +83,10 @@ class SetWorkspaceNameResponse(BaseModel):
     success: bool
 
 @router.put("/{workspace_id}/name")
-async def set_workspace_name(workspace_id, data: SetWorkspaceNameRequest, request: Request):
+async def set_workspace_name(workspace_id, data: SetWorkspaceNameRequest, github_access_token: str=Header(...)):
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if not user_id:
             raise Exception('User is not authenticated')
         
@@ -121,11 +117,10 @@ class SetWorkspacePubliclyReadableResponse(BaseModel):
     success: bool
 
 @router.put("/{workspace_id}/publicly_readable")
-async def set_workspace_public(workspace_id, data: SetWorkspacePubliclyReadableRequest, request: Request):
+async def set_workspace_public(workspace_id, data: SetWorkspacePubliclyReadableRequest, github_access_token: str=Header(...)):
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if not user_id:
             raise Exception('User is not authenticated')
         
@@ -156,11 +151,10 @@ class SetWorkspaceListedResponse(BaseModel):
     success: bool
 
 @router.put("/{workspace_id}/listed")
-async def set_workspace_listed(workspace_id, data: SetWorkspaceListedRequest, request: Request):
+async def set_workspace_listed(workspace_id, data: SetWorkspaceListedRequest, github_access_token: str=Header(...)):
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if not user_id:
             raise Exception('User is not authenticated')
         
@@ -191,11 +185,10 @@ class SetWorkspaceComputeResourceIdResponse(BaseModel):
     success: bool
 
 @router.put("/{workspace_id}/compute_resource_id")
-async def set_workspace_compute_resource_id(workspace_id, data: SetWorkspaceComputeResourceIdRequest, request: Request):
+async def set_workspace_compute_resource_id(workspace_id, data: SetWorkspaceComputeResourceIdRequest, github_access_token: str=Header(...)):
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if not user_id:
             raise Exception('User is not authenticated')
         
@@ -226,11 +219,10 @@ class SetWorkspaceUsersResponse(BaseModel):
     success: bool
 
 @router.put("/{workspace_id}/users")
-async def set_workspace_users(workspace_id, data: SetWorkspaceUsersRequest, request: Request):
+async def set_workspace_users(workspace_id, data: SetWorkspaceUsersRequest, github_access_token: str=Header(...)):
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if not user_id:
             raise Exception('User is not authenticated')
         
@@ -258,11 +250,10 @@ class DeleteWorkspaceResponse(BaseModel):
     success: bool
 
 @router.delete("/{workspace_id}")
-async def delete_workspace(workspace_id, request: Request):
+async def delete_workspace(workspace_id, github_access_token: str=Header(...)) -> DeleteWorkspaceResponse:
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if not user_id:
             raise Exception('User is not authenticated')
         
@@ -285,10 +276,9 @@ class GetProjectsResponse(BaseModel):
     success: bool
 
 @router.get("/{workspace_id}/projects")
-async def get_workspace_projects(workspace_id, request: Request):
+async def get_workspace_projects(workspace_id, github_access_token: str=Header(...)) -> GetProjectsResponse:
     try:
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
 
         workspace = await fetch_workspace(workspace_id)
         if workspace is None:

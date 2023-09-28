@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from ...services._remove_detached_files_and_jobs import _remove_detached_files_and_jobs
 from ...core.protocaas_types import ProtocaasJob
@@ -15,7 +15,7 @@ class GetJobResponse(BaseModel):
     success: bool
 
 @router.get("/{job_id}")
-async def get_job(job_id, request: Request) -> GetJobResponse:
+async def get_job(job_id) -> GetJobResponse:
     try:
         job = await fetch_job(job_id)
         if job is None:
@@ -29,11 +29,10 @@ class DeleteJobResponse(BaseModel):
     success: bool
 
 @router.delete("/{job_id}")
-async def delete_job(job_id, request: Request):
+async def delete_job(job_id, github_access_token: str=Header(...)) -> DeleteJobResponse:
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if not user_id:
             raise Exception('User is not authenticated')
 

@@ -1,5 +1,5 @@
 from typing import Union, List
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from ...services.processor.update_job_status import update_job_status
 from ...services.processor.get_upload_url import get_upload_url
@@ -10,11 +10,8 @@ router = APIRouter()
 
 # get job
 @router.get("/jobs/{job_id}")
-async def processor_get_job(job_id: str, request: Request) -> ProcessorGetJobResponse:
+async def processor_get_job(job_id: str, job_private_key: str = Header(...)) -> ProcessorGetJobResponse:
     try:
-        headers = request.headers
-        job_private_key = headers['job-private-key']
-
         job = await fetch_job(job_id)
         if job is None:
             raise Exception(f"No job with ID {job_id}")
@@ -68,12 +65,12 @@ class ProcessorUpdateJobStatusResponse(BaseModel):
     success: bool
 
 @router.put("/jobs/{job_id}/status")
-async def processor_update_job_status(job_id: str, data: ProcessorUpdateJobStatusRequest, request: Request) -> ProcessorUpdateJobStatusResponse:
+async def processor_update_job_status(job_id: str, data: ProcessorUpdateJobStatusRequest, job_private_key: str = Header(...)) -> ProcessorUpdateJobStatusResponse:
     try:
         job = await fetch_job(job_id)
         if job is None:
             raise Exception(f"No job with ID {job_id}")
-        if job.jobPrivateKey != request.headers['job-private-key']:
+        if job.jobPrivateKey != job_private_key:
             raise Exception(f"Invalid job private key for job {job_id}")
         
         await update_job_status(job=job, status=data.status, error=data.error)
@@ -88,12 +85,12 @@ class ProcessorGetJobStatusResponse(BaseModel):
     success: bool
 
 @router.get("/jobs/{job_id}/status")
-async def processor_get_job_status(job_id: str, request: Request) -> ProcessorGetJobStatusResponse:
+async def processor_get_job_status(job_id: str, job_private_key: str = Header(...)) -> ProcessorGetJobStatusResponse:
     try:
         job = await fetch_job(job_id)
         if job is None:
             return ProcessorGetJobStatusResponse(status=None, success=True)
-        if job.jobPrivateKey != request.headers['job-private-key']:
+        if job.jobPrivateKey != job_private_key:
             raise Exception(f"Invalid job private key for job {job_id}")
         
         return ProcessorGetJobStatusResponse(status=job.status, success=True)
@@ -108,12 +105,12 @@ class ProcessorSetJobConsoleOutputResponse(BaseModel):
     success: bool
 
 @router.put("/jobs/{job_id}/console_output")
-async def processor_set_job_console_output(job_id: str, data: ProcessorSetJobConsoleOutputRequest, request: Request) -> ProcessorSetJobConsoleOutputResponse:
+async def processor_set_job_console_output(job_id: str, data: ProcessorSetJobConsoleOutputRequest, job_private_key: str = Header(...)) -> ProcessorSetJobConsoleOutputResponse:
     try:
         job = await fetch_job(job_id)
         if job is None:
             raise Exception(f"No job with ID {job_id}")
-        if job.jobPrivateKey != request.headers['job-private-key']:
+        if job.jobPrivateKey != job_private_key:
             raise Exception(f"Invalid job private key for job {job_id}")
 
         # get the console output from the request body
@@ -136,10 +133,10 @@ class ProcessorGetJobOutputUploadUrlResponse(BaseModel):
     success: bool
 
 @router.get("/jobs/{job_id}/outputs/{output_name}/upload_url")
-async def processor_get_upload_url(job_id: str, output_name: str, request: Request) -> ProcessorGetJobOutputUploadUrlResponse:
+async def processor_get_upload_url(job_id: str, output_name: str, job_private_key: str = Header(...)) -> ProcessorGetJobOutputUploadUrlResponse:
     try:
         job = await fetch_job(job_id)
-        if job.jobPrivateKey != request.headers['job-private-key']:
+        if job.jobPrivateKey != job_private_key:
             raise Exception(f"Invalid job private key for job {job_id}")
         
         signed_upload_url = await get_upload_url(job=job, output_name=output_name)

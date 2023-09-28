@@ -1,6 +1,6 @@
 import os
 from pydantic import BaseModel
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 import aiohttp
 
 
@@ -11,7 +11,7 @@ class GithubAuthResponse(BaseModel):
     access_token: str
 
 @router.get("/github_auth/{code}")
-async def github_auth(code, request: Request) -> GithubAuthResponse:
+async def github_auth(code) -> GithubAuthResponse:
     GITHUB_CLIENT_ID = os.environ.get('VITE_GITHUB_CLIENT_ID')
     GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET')
     if GITHUB_CLIENT_ID is None:

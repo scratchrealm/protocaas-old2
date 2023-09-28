@@ -2,7 +2,7 @@ from typing import Union, List, Any
 import os
 import time
 from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Header
 from ...services._crypto_keys import _verify_signature
 from ...core.protocaas_types import ProtocaasComputeResource, ProtocaasComputeResourceApp, PubsubSubscription
 from ._authenticate_gui_request import _authenticate_gui_request
@@ -18,7 +18,7 @@ class GetComputeResourceResponse(BaseModel):
     success: bool
 
 @router.get("/{compute_resource_id}")
-async def get_compute_resource(compute_resource_id, request: Request) -> GetComputeResourceResponse:
+async def get_compute_resource(compute_resource_id) -> GetComputeResourceResponse:
     try:
         compute_resource = await fetch_compute_resource(compute_resource_id)
         if compute_resource is None:
@@ -33,11 +33,10 @@ class GetComputeResourcesResponse(BaseModel):
     success: bool
 
 @router.get("")
-async def get_compute_resources(request: Request):
+async def get_compute_resources(github_access_token: str=Header(...)):
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if not user_id:
             raise Exception('User is not authenticated')
         
@@ -55,11 +54,10 @@ class SetComputeResourceAppsResponse(BaseModel):
     success: bool
 
 @router.put("/{compute_resource_id}/apps")
-async def set_compute_resource_apps(compute_resource_id, data: SetComputeResourceAppsRequest, request: Request) -> SetComputeResourceAppsResponse:
+async def set_compute_resource_apps(compute_resource_id, data: SetComputeResourceAppsRequest, github_access_token: str=Header(...)) -> SetComputeResourceAppsResponse:
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if not user_id:
             raise Exception('User is not authenticated')
 
@@ -87,11 +85,10 @@ class DeleteComputeResourceResponse(BaseModel):
     success: bool
 
 @router.delete("/{compute_resource_id}")
-async def delete_compute_resource(compute_resource_id, request: Request) -> DeleteComputeResourceResponse:
+async def delete_compute_resource(compute_resource_id, github_access_token: str=Header(...)) -> DeleteComputeResourceResponse:
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if not user_id:
             raise Exception('User is not authenticated')
 
@@ -113,7 +110,7 @@ class GetPubsubSubscriptionResponse(BaseModel):
     success: bool
 
 @router.get("/{compute_resource_id}/pubsub_subscription")
-async def get_pubsub_subscription(compute_resource_id, request: Request):
+async def get_pubsub_subscription(compute_resource_id):
     try:
         compute_resource = await fetch_compute_resource(compute_resource_id)
         if compute_resource is None:
@@ -141,11 +138,10 @@ class RegisterComputeResourceResponse(BaseModel):
     success: bool
 
 @router.post("/register")
-async def register_compute_resource(data: RegisterComputeResourceRequest, request: Request) -> RegisterComputeResourceResponse:
+async def register_compute_resource(data: RegisterComputeResourceRequest, github_access_token: str=Header(...)) -> RegisterComputeResourceResponse:
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if user_id is None:
             raise Exception('User is not authenticated')
         
@@ -170,11 +166,10 @@ class GetJobsForComputeResourceResponse(BaseModel):
     success: bool
 
 @router.get("/{compute_resource_id}/jobs")
-async def get_jobs_for_compute_resource(compute_resource_id, request: Request) -> GetJobsForComputeResourceResponse:
+async def get_jobs_for_compute_resource(compute_resource_id, github_access_token: str=Header(...)) -> GetJobsForComputeResourceResponse:
     try:
         # authenticate the request
-        headers = request.headers
-        user_id = await _authenticate_gui_request(headers)
+        user_id = await _authenticate_gui_request(github_access_token)
         if not user_id:
             raise Exception('User is not authenticated')
 

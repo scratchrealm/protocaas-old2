@@ -4,8 +4,7 @@ import aiohttp
 
 _user_ids_for_access_tokens = {} # github access token -> {user_id: string, timestamp: float}
 
-async def _authenticate_gui_request(headers: dict):
-    github_access_token = headers.get('github-access-token')
+async def _authenticate_gui_request(github_access_token: str):
     if not github_access_token:
         return None
     if github_access_token in _user_ids_for_access_tokens:
