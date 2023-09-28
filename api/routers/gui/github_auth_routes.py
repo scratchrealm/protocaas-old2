@@ -18,7 +18,7 @@ async def github_auth(code, request: Request) -> GithubAuthResponse:
         raise Exception('Env var not set: VITE_GITHUB_CLIENT_ID')
     if GITHUB_CLIENT_SECRET is None:
         raise Exception('Env var not set: GITHUB_CLIENT_SECRET')
-    url = f'https://github.com/login/oauth/access_token?client_id=${GITHUB_CLIENT_ID}&client_secret=${GITHUB_CLIENT_SECRET}&code=${code}'
+    url = f'https://github.com/login/oauth/access_token?client_id={GITHUB_CLIENT_ID}&client_secret={GITHUB_CLIENT_SECRET}&code={code}'
     headers = {
         'accept': 'application/json'
     }
