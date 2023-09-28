@@ -39,6 +39,37 @@ class ProtocaasJobOutputFile(BaseModel):
     fileName: str
     fileId: Union[str, None]=None
 
+class ComputeResourceSpecProcessorParameter(BaseModel):
+    name: str
+    help: str
+    type: str
+    default: Union[Any, None]=None
+    options: Union[List[str], List[int], None]=None
+
+class ComputeResourceSpecProcessorInput(BaseModel):
+    name: str
+    help: str
+
+class ComputeResourceSpecProcessorOutput(BaseModel):
+    name: str
+    help: str
+
+class ComputeResourceSpecProcessorAttribute(BaseModel):
+    name: str
+    value: Any
+
+class ComputeResourceSpecProcessorTag(BaseModel):
+    tag: str
+
+class ComputeResourceSpecProcessor(BaseModel):
+    name: str
+    help: str
+    inputs: List[ComputeResourceSpecProcessorInput]
+    outputs: List[ComputeResourceSpecProcessorOutput]
+    parameters: List[ComputeResourceSpecProcessorParameter]
+    attributes: List[ComputeResourceSpecProcessorAttribute]
+    tags: List[ComputeResourceSpecProcessorTag]
+
 class ProtocaasJob(BaseModel):
     projectId: str
     workspaceId: str
@@ -64,7 +95,7 @@ class ProtocaasJob(BaseModel):
     timestampStarted: Union[float, None]=None
     timestampFinished: Union[float, None]=None
     outputFileIds: Union[List[str], None]=None
-    processorSpec: dict
+    processorSpec: ComputeResourceSpecProcessor
 
 class ProtocaasFile(BaseModel):
     projectId: str
@@ -102,37 +133,6 @@ class ProtocaasComputeResource(BaseModel):
     timestampCreated: float
     apps: List[ProtocaasComputeResourceApp]
     spec: Union[dict, None]=None
-
-class ComputeResourceSpecProcessorParameter(BaseModel):
-    name: str
-    help: str
-    type: str
-    default: Union[Any, None]=None
-    options: Union[List[str], List[int], None]=None
-
-class ComputeResourceSpecProcessorInput(BaseModel):
-    name: str
-    help: str
-
-class ComputeResourceSpecProcessorOutput(BaseModel):
-    name: str
-    help: str
-
-class ComputeResourceSpecProcessorAttribute(BaseModel):
-    name: str
-    value: Any
-
-class ComputeResourceSpecProcessorTag(BaseModel):
-    tag: str
-
-class ComputeResourceSpecProcessor(BaseModel):
-    name: str
-    help: str
-    inputs: List[ComputeResourceSpecProcessorInput]
-    outputs: List[ComputeResourceSpecProcessorOutput]
-    parameters: List[ComputeResourceSpecProcessorParameter]
-    attributes: List[ComputeResourceSpecProcessorAttribute]
-    tags: List[ComputeResourceSpecProcessorTag]
 
 class ComputeResourceSpecApp(BaseModel):
     name: str

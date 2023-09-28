@@ -2,7 +2,7 @@ import time
 import os
 from typing import Union, List, Any
 from pydantic import BaseModel
-from ...core.protocaas_types import ComputeResourceSpecProcessor, ProtocaasJobInputFile, ProtocaasJobOutputFile, ProtocaasJob
+from ...core.protocaas_types import ComputeResourceSpecProcessor, ProtocaasJobInputFile, ProtocaasJobOutputFile, ProtocaasJob, ProtocaasJobInputParameter
 from ...clients.db import fetch_workspace, fetch_project, fetch_file, delete_file, fetch_project_jobs, delete_job, insert_job
 from ...core._get_workspace_role import _get_workspace_role
 from ...core._create_random_id import _create_random_id
@@ -104,6 +104,10 @@ async def create_job(
     if something_was_deleted:
         await _remove_detached_files_and_jobs(project_id)
     
+    input_parameters2 = [
+        ProtocaasJobInputParameter(**x.dict()) for x in input_parameters
+    ]
+
     job = ProtocaasJob(
         jobId=job_id,
         jobPrivateKey=job_private_key,
@@ -113,7 +117,7 @@ async def create_job(
         processorName=processor_name,
         inputFiles=input_files,
         inputFileIds=[x.fileId for x in input_files],
-        inputParameters=input_parameters,
+        inputParameters=input_parameters2,
         outputFiles=output_files,
         timestampCreated=time.time(),
         computeResourceId=compute_resource_id,

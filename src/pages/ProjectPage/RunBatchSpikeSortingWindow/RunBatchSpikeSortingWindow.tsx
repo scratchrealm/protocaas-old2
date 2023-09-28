@@ -112,14 +112,15 @@ const RunBatchSpikeSortingWindow: FunctionComponent<Props> = ({ filePaths, onClo
             setOperatingMessage(`Submitting job ${filePath} (${i + 1} of ${filePaths.length})`)
             jobDefinition2.inputFiles[0].fileName = filePath
             jobDefinition2.outputFiles[0].fileName = outputFileName
-            console.log('JOB DEFINITION', jobDefinition)
-            await createJob({
+            const job = {
                 workspaceId,
                 projectId,
                 jobDefinition: jobDefinition2,
                 processorSpec: processor,
                 batchId
-            }, auth)
+            }
+            console.log('CREATING JOB', job)
+            await createJob(job, auth)
         }
         setOperatingMessage(undefined)
         setOperating(false)
