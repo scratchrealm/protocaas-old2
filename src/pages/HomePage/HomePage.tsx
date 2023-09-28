@@ -18,7 +18,7 @@ const HomePage: FunctionComponent<Props> = ({width, height}) => {
         <div className="homepage" style={{position: 'absolute', width, height, overflowY: 'auto'}}>
             <div style={{position: 'absolute', left: (width - W) / 2, width: W, border: 'solid 1px lightgray'}}>
                 <div style={{padding: 20}}>
-                    <h1 style={{textAlign: 'center'}}>Protocaas 2</h1>
+                    <h1 style={{textAlign: 'center'}}>Protocaas</h1>
                     <p style={{textAlign: 'center'}}>
                         Create, run, and share neuroscience analyses. <Hyperlink onClick={() => setRoute({page: 'about'})}>Learn more...</Hyperlink>
                     </p>
