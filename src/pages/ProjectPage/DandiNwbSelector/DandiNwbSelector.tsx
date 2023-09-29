@@ -10,6 +10,20 @@ type Props = {
     onNwbFilesSelected: (files: {nwbUrl: string, dandisetId: string, dandisetVersion: string, assetId: string, assetPath: string, useStaging: boolean}[]) => Promise<void>
 }
 
+export const getDandiApiHeaders = (useStaging: boolean): {[key: string]: string} => {
+    const headers: {[key: string]: string} = {}
+    const dandiApiKey = useStaging ? (
+        localStorage.getItem('dandiStagingApiKey') || ''
+    ) : (
+        localStorage.getItem('dandiApiKey') || ''
+    )
+    if (dandiApiKey) {
+        headers['Authorization'] = `token ${dandiApiKey}`
+    }
+    return headers
+}
+
+
 const topBarHeight = 30
 const searchBarHeight = 50
 const DandiNwbSelector: FunctionComponent<Props> = ({width, height, onNwbFilesSelected}) => {
@@ -22,7 +36,13 @@ const DandiNwbSelector: FunctionComponent<Props> = ({width, height, onNwbFilesSe
         let canceled = false
         setSearchResults([])
         ; (async () => {
-            const response = await fetch(`https://api${stagingStr}.dandiarchive.org/api/dandisets/?page=1&page_size=50&ordering=-modified&search=${searchText}&draft=true&empty=false&embargoed=false`)
+            const headers = getDandiApiHeaders(useStaging)
+            const response = await fetch(
+                `https://api${stagingStr}.dandiarchive.org/api/dandisets/?page=1&page_size=50&ordering=-modified&search=${searchText}&draft=true&empty=false&embargoed=true`,
+                {
+                    headers
+                }
+            )
             if (canceled) return
             if (response.status === 200) {
                 const json = await response.json()
@@ -31,12 +51,18 @@ const DandiNwbSelector: FunctionComponent<Props> = ({width, height, onNwbFilesSe
             }
         })()
         return () => {canceled = true}
-    }, [searchText, stagingStr])
+    }, [searchText, stagingStr, useStaging])
 
     const handleImportItems = useCallback(async (items: {dandisetId: string, dandisetVersion: string, assetItem: AssetsResponseItem}[]) => {
         const files: {nwbUrl: string, dandisetId: string, dandisetVersion: string, assetId: string, assetPath: string, useStaging: boolean}[] = []
         for (const item of items) {
-            const response = await fetch(`https://api${stagingStr}.dandiarchive.org/api/dandisets/${item.dandisetId}/versions/${item.dandisetVersion}/assets/${item.assetItem.asset_id}/`)
+            const headers = getDandiApiHeaders(useStaging)
+            const response = await fetch(
+                `https://api${stagingStr}.dandiarchive.org/api/dandisets/${item.dandisetId}/versions/${item.dandisetVersion}/assets/${item.assetItem.asset_id}/`,
+                {
+                    headers
+                }
+            )
             if (response.status === 200) {
                 const json = await response.json()
                 const assetResponse: AssetResponse = json

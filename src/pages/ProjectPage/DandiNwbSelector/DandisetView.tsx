@@ -1,6 +1,7 @@
 import { FunctionComponent, useCallback, useEffect, useMemo, useReducer, useState } from "react"
 import formatByteCount from "../FileBrowser/formatByteCount"
 import { AssetsResponse, AssetsResponseItem, DandisetSearchResultItem, DandisetVersionInfo } from "./types"
+import { getDandiApiHeaders } from "./DandiNwbSelector"
 
 type DandisetViewProps = {
     dandisetId: string
@@ -23,7 +24,13 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({dandisetId, width, 
         let canceled = false
         setDandisetResponse(null)
         ; (async () => {
-            const response = await fetch(`https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}`)
+            const headers = getDandiApiHeaders(useStaging || false)
+            const response = await fetch(
+                `https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}`,
+                {
+                    headers
+                }
+            )
             if (canceled) return
             if (response.status === 200) {
                 const json = await response.json()
@@ -32,7 +39,7 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({dandisetId, width, 
             }
         })()
         return () => {canceled = true}
-    }, [dandisetId, stagingStr])
+    }, [dandisetId, stagingStr, useStaging])
 
     const {identifier, created, modified, contact_person, most_recent_published_version, draft_version} = dandisetResponse || {}
     const V = most_recent_published_version || draft_version
@@ -43,7 +50,11 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({dandisetId, width, 
         if (!dandisetResponse) return
         if (!V) return
         ; (async () => {
-            const response = await fetch(`https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}/versions/${V.version}/info/`)
+            const headers = getDandiApiHeaders(useStaging || false)
+            const response = await fetch(
+                `https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}/versions/${V.version}/info/`,
+                {headers}
+            )
             if (canceled) return
             if (response.status === 200) {
                 const json = await response.json()
@@ -52,7 +63,7 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({dandisetId, width, 
             }
         })()
         return () => {canceled = true}
-    }, [dandisetId, dandisetResponse, V, stagingStr])
+    }, [dandisetId, dandisetResponse, V, stagingStr, useStaging])
 
     useEffect(() => {
         const maxNumPages = 10
@@ -65,6 +76,7 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({dandisetId, width, 
         if (!V) return
         ; (async () => {
             let rr: AssetsResponse[] = []
+            const headers = getDandiApiHeaders(useStaging || false)
             let uu: string | null = `https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}/versions/${V.version}/assets/?page_size=1000`
             let count = 0
             while (uu) {
@@ -72,7 +84,10 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({dandisetId, width, 
                     setIncomplete(true)
                     break
                 }
-                const rrr: any = await fetch(uu) // don't know why typescript is telling me I need any type here
+                const rrr: any = await fetch( // don't know why typescript is telling me I need any type here
+                    uu,
+                    {headers}
+                )
                 if (canceled) return
                 if (rrr.status === 200) {
                     const json = await rrr.json()
@@ -85,7 +100,7 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({dandisetId, width, 
             }
         })()
         return () => {canceled = true}
-    }, [dandisetId, dandisetResponse, V, stagingStr])
+    }, [dandisetId, dandisetResponse, V, stagingStr, useStaging])
 
     const allAssets = useMemo(() => {
         const rr: AssetsResponseItem[] = []

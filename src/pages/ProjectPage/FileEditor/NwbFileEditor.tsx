@@ -14,6 +14,8 @@ import LoadNwbInPythonWindow from "../LoadNwbInPythonWindow/LoadNwbInPythonWindo
 import { useProject } from "../ProjectPageContext";
 import RunSpikeSortingWindow from "./RunSpikeSortingWindow/RunSpikeSortingWindow";
 import SpikeSortingOutputSection from "./SpikeSortingOutputSection/SpikeSortingOutputSection";
+import { get } from "http";
+import { getDandiApiHeaders } from "../DandiNwbSelector/DandiNwbSelector";
 
 
 type Props = {
@@ -125,14 +127,20 @@ const NwbFileEditorChild: FunctionComponent<Props> = ({fileName, width, height})
         if (!dandisetId) return
         if (!dandiAssetId) return
         ; (async () => {
-            const response = await fetch(`https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}/versions/${dandisetVersion}/assets/${dandiAssetId}/`)
+            const headers = getDandiApiHeaders(dandiStaging)
+            const response = await fetch(
+                `https://api${stagingStr}.dandiarchive.org/api/dandisets/${dandisetId}/versions/${dandisetVersion}/assets/${dandiAssetId}/`,
+                {
+                    headers
+                }
+            )
             if (response.status === 200) {
                 const json = await response.json()
                 const assetResponse: AssetResponse = json
                 setAssetResponse(assetResponse)
             }
         })()
-    }, [dandisetId, dandiAssetId, dandisetVersion, stagingStr])
+    }, [dandisetId, dandiAssetId, dandisetVersion, stagingStr, dandiStaging])
 
     if ((assetResponse) && (dandiAssetPath !== assetResponse.path)) {
         console.warn(`Mismatch between dandiAssetPath (${dandiAssetPath}) and assetResponse.path (${assetResponse.path})`)
