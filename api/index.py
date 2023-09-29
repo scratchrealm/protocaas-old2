@@ -17,13 +17,13 @@ from api_helpers.routers.gui.router import router as gui_router
 app = FastAPI()
 
 # requests from a processing job
-app.include_router(processor_router, prefix="/api/processor")
+app.include_router(processor_router, prefix="/api/processor", tags=["Processor"])
 
 # requests from a compute resource
-app.include_router(compute_resource_router, prefix="/api/compute_resource")
+app.include_router(compute_resource_router, prefix="/api/compute_resource", tags=["Compute Resource"])
 
 # requests from a client (usually Python)
-app.include_router(client_router, prefix="/api/client")
+app.include_router(client_router, prefix="/api/client", tags=["Client"])
 
 # requests from the GUI
-app.include_router(gui_router, prefix="/api/gui")
+app.include_router(gui_router, prefix="/api/gui", tags=["GUI"])

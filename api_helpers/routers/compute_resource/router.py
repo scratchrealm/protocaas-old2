@@ -1,10 +1,10 @@
-import os
 from typing import List
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Header
 from ...services._crypto_keys import _verify_signature_str
 from ...core.protocaas_types import ProtocaasComputeResourceApp, ProtocaasJob, ComputeResourceSpec, PubsubSubscription
 from ...clients.db import fetch_compute_resource, fetch_compute_resource_jobs, update_compute_resource_node, set_compute_resource_spec
+from ...core.settings import get_settings
 
 router = APIRouter()
 
@@ -61,7 +61,7 @@ async def compute_resource_get_pubsub_subscription(
         compute_resource = await fetch_compute_resource(compute_resource_id)
         if compute_resource is None:
             raise Exception(f"No compute resource with ID {compute_resource_id}")
-        VITE_PUBNUB_SUBSCRIBE_KEY = os.environ.get('VITE_PUBNUB_SUBSCRIBE_KEY')
+        VITE_PUBNUB_SUBSCRIBE_KEY = get_settings().PUBNUB_SUBSCRIBE_KEY
         if VITE_PUBNUB_SUBSCRIBE_KEY is None:
             raise Exception('Environment variable not set: VITE_PUBNUB_SUBSCRIBE_KEY')
         subscription = PubsubSubscription(

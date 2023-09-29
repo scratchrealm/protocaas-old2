@@ -8,6 +8,7 @@ from ...core.protocaas_types import ProtocaasComputeResource, ProtocaasComputeRe
 from ._authenticate_gui_request import _authenticate_gui_request
 from ...clients.db import fetch_compute_resource, fetch_compute_resources_for_user, update_compute_resource, fetch_compute_resource_jobs
 from ...clients.db import register_compute_resource as db_register_compute_resource
+from ...core.settings import get_settings
 
 
 router = APIRouter()
@@ -116,7 +117,7 @@ async def get_pubsub_subscription(compute_resource_id):
         if compute_resource is None:
             raise Exception(f"No compute resource with ID {compute_resource_id}")
         
-        VITE_PUBNUB_SUBSCRIBE_KEY = os.environ.get('VITE_PUBNUB_SUBSCRIBE_KEY')
+        VITE_PUBNUB_SUBSCRIBE_KEY = get_settings().PUBNUB_SUBSCRIBE_KEY
         if VITE_PUBNUB_SUBSCRIBE_KEY is None:
             raise Exception('Environment variable not set: VITE_PUBNUB_SUBSCRIBE_KEY')
         subscription = PubsubSubscription(

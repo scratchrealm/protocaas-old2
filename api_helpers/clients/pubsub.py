@@ -2,11 +2,13 @@ import os
 import json
 import aiohttp
 import urllib.parse
+from ..core.settings import get_settings
 
 async def publish_pubsub_message(*, channel: str, message: dict):
+    settings = get_settings()
     # see https://www.pubnub.com/docs/sdks/rest-api/publish-message-to-channel
-    sub_key = os.environ.get("VITE_PUBNUB_SUBSCRIBE_KEY")
-    pub_key = os.environ.get("PUBNUB_PUBLISH_KEY")
+    sub_key = settings.PUBNUB_SUBSCRIBE_KEY
+    pub_key = settings.PUBNUB_PUBLISH_KEY
     uuid = 'protocaas'
     # payload is url encoded json
     payload = json.dumps(message)

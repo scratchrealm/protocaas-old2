@@ -2,6 +2,7 @@ import time
 import os
 from typing import Union
 from ...core.protocaas_types import ProtocaasJob
+from ...core.settings import get_settings
 from .._create_output_file import _create_output_file
 from ...clients.db import update_job
 from ...clients.pubsub import publish_pubsub_message
@@ -32,7 +33,7 @@ async def update_job_status(job: ProtocaasJob, status: str, error: Union[str, No
             raise Exception(f"Cannot set job error when status is {new_status}")
     if new_status == 'completed':
         # we need to create the output files before marking the job as completed
-        output_bucket_base_url = os.environ.get('OUTPUT_BUCKET_BASE_URL')
+        output_bucket_base_url = get_settings().OUTPUT_BUCKET_BASE_URL
         if output_bucket_base_url is None:
             raise Exception('Environment variable not set: OUTPUT_BUCKET_BASE_URL')
         output_file_ids = []

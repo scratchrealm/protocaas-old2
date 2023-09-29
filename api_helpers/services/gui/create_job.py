@@ -1,5 +1,4 @@
 import time
-import os
 from typing import Union, List, Any
 from pydantic import BaseModel
 from ...core.protocaas_types import ComputeResourceSpecProcessor, ProtocaasJobInputFile, ProtocaasJobOutputFile, ProtocaasJob, ProtocaasJobInputParameter
@@ -8,6 +7,7 @@ from ...core._get_workspace_role import _get_workspace_role
 from ...core._create_random_id import _create_random_id
 from ...clients.pubsub import publish_pubsub_message
 from .._remove_detached_files_and_jobs import _remove_detached_files_and_jobs
+from ...core.settings import get_settings
 
 class CreateJobRequestInputFile(BaseModel):
     name: str
@@ -40,7 +40,7 @@ async def create_job(
     
     compute_resource_id = workspace.computeResourceId
     if compute_resource_id is None:
-        compute_resource_id = os.environ.get('VITE_DEFAULT_COMPUTE_RESOURCE_ID')
+        compute_resource_id = get_settings().DEFAULT_COMPUTE_RESOURCE_ID
         if compute_resource_id is None:
             raise Exception('Workspace does not have a compute resource ID, and no default VITE_DEFAULT_COMPUTE_RESOURCE_ID is set in the environment.')
     
