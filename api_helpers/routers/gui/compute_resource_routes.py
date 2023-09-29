@@ -73,7 +73,7 @@ async def set_compute_resource_apps(compute_resource_id, data: SetComputeResourc
             raise Exception('User does not have permission to admin this compute resource')
         
         await update_compute_resource(compute_resource_id, update={
-            'apps': apps,
+            'apps': [app.dict(exclude_none=True) for app in apps],
             'timestampModified': time.time()
         })
 

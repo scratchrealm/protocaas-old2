@@ -98,13 +98,14 @@ const RunBatchSpikeSortingWindow: FunctionComponent<Props> = ({ filePaths, onClo
     const handleSubmit = useCallback(async () => {
         if (!processor) return
         if (!files) return
+        if (!selectedSpikeSortingProcessor) return
         setOperating(true)
         setOperatingMessage('Preparing...')
         const batchId = createRandomId(8)
         for (let i = 0; i < filePaths.length; i++) {
             const filePath = filePaths[i]
             const jobDefinition2: ProtocaasProcessingJobDefinition = deepCopy(jobDefinition)
-            const outputFileName = `${outputPrefix}/${filePath}`
+            const outputFileName = `${outputPrefix}/${appendSorterDescToNwbPath(filePath, selectedSpikeSortingProcessor)}`
             const outputExists = files.find(f => (f.fileName === outputFileName))
             if (outputExists && !overwriteExistingOutputs) {
                 continue
@@ -126,7 +127,7 @@ const RunBatchSpikeSortingWindow: FunctionComponent<Props> = ({ filePaths, onClo
         setOperatingMessage(undefined)
         setOperating(false)
         onClose()
-    }, [workspaceId, projectId, jobDefinition, processor, filePaths, files, overwriteExistingOutputs, outputPrefix, auth, onClose])
+    }, [workspaceId, projectId, jobDefinition, processor, filePaths, files, overwriteExistingOutputs, outputPrefix, auth, onClose, selectedSpikeSortingProcessor])
 
     if (!selectedSpikeSortingProcessor) {
         return (
@@ -224,6 +225,18 @@ const createRandomId = (numChars: number) => {
         ret += chars[j]
     }
     return ret
+}
+
+const appendSorterDescToNwbPath = (nwbPath: string, processorName: string) => {
+    // for example, sub-paired-english_ses-paired-english-m26-190524-100859-cell3_ecephys.nwb goes to sub-paired-english_ses-paired-english-m26-190524-100859-cell3_ecephys_desc-{processorName}.nwb
+    const parts = nwbPath.split('.')
+    const ext = parts.pop()
+    const pp = replaceUnderscoreWithDash(processorName)
+    return `${parts.join('.')}_desc-${pp}.${ext}`
+}
+
+const replaceUnderscoreWithDash = (x: string) => {
+    return x.split('_').join('-')
 }
 
 export default RunBatchSpikeSortingWindow

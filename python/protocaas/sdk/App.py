@@ -157,10 +157,21 @@ class App:
 
         kwargs = {}
         for input in processor._inputs:
-            input_file = next((i for i in job.inputs if i._name == input.name), None)
-            if input_file is None:
-                raise Exception(f'Input not found: {input.name}')
-            kwargs[input.name] = input_file
+            if not input.list:
+                input_file = next((i for i in job.inputs if i._name == input.name), None)
+                if input_file is None:
+                    raise Exception(f'Input not found: {input.name}')
+                kwargs[input.name] = input_file
+            else:
+                the_list: List[InputFile] = []
+                ii = 0
+                while True:
+                    input_file = next((i for i in job.inputs if i._name == f'{input.name}[{ii}]'), None)
+                    if input_file is None:
+                        break
+                    the_list.append(input_file)
+                    ii += 1
+                kwargs[input.name] = the_list
         for output in processor._outputs:
             output_file = next((o for o in job.outputs if o._name == output.name), None)
             if output_file is None:

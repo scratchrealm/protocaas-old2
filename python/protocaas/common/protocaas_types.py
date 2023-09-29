@@ -45,10 +45,12 @@ class ComputeResourceSpecProcessorParameter(BaseModel):
     type: str
     default: Union[Any, None]=None
     options: Union[List[str], List[int], None]=None
+    secret: bool=False
 
 class ComputeResourceSpecProcessorInput(BaseModel):
     name: str
     help: str
+    list: bool=False
 
 class ComputeResourceSpecProcessorOutput(BaseModel):
     name: str

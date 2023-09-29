@@ -4,6 +4,7 @@ from ._get_mongo_client import _get_mongo_client
 from ._remove_id_field import _remove_id_field
 from ..core.protocaas_types import ProtocaasProject, ProtocaasWorkspace, ProtocaasFile, ProtocaasJob, ProtocaasComputeResource, ComputeResourceSpec
 from ..core._get_workspace_role import _get_workspace_role
+from ..core._hide_secret_params_in_job import _hide_secret_params_in_job
 
 
 async def fetch_workspace(workspace_id: str) -> ProtocaasWorkspace:
@@ -112,6 +113,7 @@ async def fetch_project_jobs(project_id: str, include_private_keys=False) -> Lis
             job.jobPrivateKey = '' # hide the private key
     for job in jobs:
         job.dandiApiKey = None # hide the DANDI API key
+        _hide_secret_params_in_job(job)
     return jobs
 
 async def update_project(project_id: str, update: dict):
@@ -227,6 +229,7 @@ async def fetch_compute_resource_jobs(compute_resource_id: str, statuses: Union[
             job.jobPrivateKey = '' # hide the private key
     for job in jobs:
         job.dandiApiKey = None # hide the DANDI API key
+        _hide_secret_params_in_job(job)
     return jobs
 
 async def update_compute_resource_node(compute_resource_id: str, compute_resource_node_id: str, compute_resource_node_name: str):
@@ -256,7 +259,7 @@ async def set_compute_resource_spec(compute_resource_id: str, spec: ComputeResou
         }
     })
 
-async def fetch_job(job_id: str, *, include_dandi_api_key: bool=False):
+async def fetch_job(job_id: str, *, include_dandi_api_key: bool=False, include_secret_params: bool=False):
     client = _get_mongo_client()
     jobs_collection = client['protocaas']['jobs']
     job = await jobs_collection.find_one({'jobId': job_id})
@@ -266,6 +269,8 @@ async def fetch_job(job_id: str, *, include_dandi_api_key: bool=False):
     job = ProtocaasJob(**job) # validate job
     if not include_dandi_api_key:
         job.dandiApiKey = None
+    if not include_secret_params:
+        _hide_secret_params_in_job(job)
     return job
 
 async def update_job(job_id: str, update: dict):

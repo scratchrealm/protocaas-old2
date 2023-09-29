@@ -252,6 +252,7 @@ export type ComputeResourceSpecProcessorParameter = {
     type: string
     default?: any
     options?: string[] | number[]
+    secret?: boolean
 }
 
 export type ComputeResourceSpecProcessor = {
@@ -260,6 +261,7 @@ export type ComputeResourceSpecProcessor = {
     inputs: {
         name: string
         help: string
+        list?: boolean
     }[]
     outputs: {
         name: string
@@ -281,7 +283,8 @@ export const isComputeResourceSpecProcessor = (x: any): x is ComputeResourceSpec
         help: isString,
         inputs: isArrayOf(y => (validateObject(y, {
             name: isString,
-            help: isString
+            help: isString,
+            list: optional(isBoolean)
         }))),
         outputs: isArrayOf(y => (validateObject(y, {
             name: isString,
@@ -292,7 +295,8 @@ export const isComputeResourceSpecProcessor = (x: any): x is ComputeResourceSpec
             help: isString,
             type: isString,
             default: optional(() => true),
-            options: optional(isArrayOf(() => true))
+            options: optional(isArrayOf(() => true)),
+            secret: optional(isBoolean)
         }))),
         attributes: isArrayOf(y => (validateObject(y, {
             name: isString,

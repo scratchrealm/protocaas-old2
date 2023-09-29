@@ -1,8 +1,9 @@
 import { Delete, Refresh, Settings } from "@mui/icons-material"
-import { FunctionComponent, useCallback, useState } from "react"
+import { FunctionComponent, useCallback, useMemo, useState } from "react"
 import SmallIconButton from "../../../components/SmallIconButton"
 import { confirm } from "../../../confirm_prompt_alert"
 import { useProject } from "../ProjectPageContext"
+import prepareDandiUploadTask, { DandiUploadTask } from "../dandiUpload/prepareDandiUploadTask"
 
 type FileBrowserMenuBarProps = {
     width: number
@@ -10,9 +11,10 @@ type FileBrowserMenuBarProps = {
     selectedFileNames: string[]
     onResetSelection: () => void
     onRunBatchSpikeSorting?: (filePaths: string[]) => void
+    onDandiUpload?: (dandiUploadTask: DandiUploadTask) => void
 }
 
-const FileBrowserMenuBar: FunctionComponent<FileBrowserMenuBarProps> = ({ width, height, selectedFileNames, onResetSelection, onRunBatchSpikeSorting }) => {
+const FileBrowserMenuBar: FunctionComponent<FileBrowserMenuBarProps> = ({ width, height, selectedFileNames, onResetSelection, onRunBatchSpikeSorting, onDandiUpload }) => {
     const {deleteFile, refreshFiles} = useProject()
     const [operating, setOperating] = useState(false)
     const handleDelete = useCallback(async () => {
@@ -30,6 +32,10 @@ const FileBrowserMenuBar: FunctionComponent<FileBrowserMenuBarProps> = ({ width,
             onResetSelection()
         }
     }, [selectedFileNames, deleteFile, refreshFiles, onResetSelection])
+
+    const dandiUploadTask = useMemo(() => (
+        prepareDandiUploadTask(selectedFileNames)
+    ), [selectedFileNames])
 
     return (
         <div>
@@ -63,6 +69,17 @@ const FileBrowserMenuBar: FunctionComponent<FileBrowserMenuBarProps> = ({ width,
                         title={selectedFileNames.length > 0 ? `Run spike sorting on these ${selectedFileNames.length} files` : ''}
                         onClick={() => onRunBatchSpikeSorting(selectedFileNames)}
                         label="Run spike sorting"
+                    />
+                )
+            }
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            {
+                dandiUploadTask && onDandiUpload && (
+                    <SmallIconButton
+                        icon={<Settings />}
+                        title={selectedFileNames.length > 0 ? `Upload these ${selectedFileNames.length} files to DANDI` : ''}
+                        onClick={() => onDandiUpload(dandiUploadTask)}
+                        label="Upload to DANDI"
                     />
                 )
             }

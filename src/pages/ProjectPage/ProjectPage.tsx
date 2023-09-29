@@ -16,6 +16,8 @@ import ProjectJobs from "./ProjectJobs";
 import { SetupProjectPage, useProject } from "./ProjectPageContext";
 import RunBatchSpikeSortingWindow from "./RunBatchSpikeSortingWindow/RunBatchSpikeSortingWindow";
 import { SetupComputeResources } from "../ComputeResourcesPage/ComputeResourcesContext";
+import { DandiUploadTask } from "./dandiUpload/prepareDandiUploadTask";
+import DandiUploadWindow from "./dandiUpload/DandiUploadWindow";
 
 type Props = {
     width: number
@@ -199,6 +201,13 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({width, height}) => {
         openRunSpikeSortingWindow()
     }, [openRunSpikeSortingWindow])
 
+    const {visible: dandiUploadWindowVisible, handleOpen: openDandiUploadWindow, handleClose: closeDandiUploadWindow} = useModalDialog()
+    const [dandiUploadTask, setDandiUploadTask] = useState<DandiUploadTask | undefined>(undefined)
+    const handleDandiUpload = useCallback((dandiUploadTask: DandiUploadTask) => {
+        setDandiUploadTask(dandiUploadTask)
+        openDandiUploadWindow()
+    }, [openDandiUploadWindow])
+
     return (
         <div style={{position: 'absolute', width, height, overflow: 'hidden', background: 'white'}}>
             <div style={{position: 'absolute', width, height, visibility: currentView === 'project-home' ? undefined : 'hidden'}}>
@@ -212,6 +221,7 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({width, height}) => {
                     width={width}
                     height={height}
                     onRunBatchSpikeSorting={handleRunSpikeSorting}
+                    onDandiUpload={handleDandiUpload}
                 />
             </div>
             <div style={{position: 'absolute', width, height, visibility: currentView === 'project-jobs' ? undefined : 'hidden'}}>
@@ -259,6 +269,19 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({width, height}) => {
                     filePaths={spikeSortingFilePaths}
                     onClose={closeRunSpikeSortingWindow}
                 />
+            </ModalWindow>
+            <ModalWindow
+                open={dandiUploadWindowVisible}
+                onClose={closeDandiUploadWindow}
+            >
+                {
+                    dandiUploadTask && (
+                        <DandiUploadWindow
+                            dandiUploadTask={dandiUploadTask}
+                            onClose={closeDandiUploadWindow}
+                        />
+                    )
+                }
             </ModalWindow>
         </div>
     )

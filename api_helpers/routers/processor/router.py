@@ -13,7 +13,7 @@ router = APIRouter()
 @router.get("/jobs/{job_id}")
 async def processor_get_job(job_id: str, job_private_key: str = Header(...)) -> ProcessorGetJobResponse:
     try:
-        job = await fetch_job(job_id, include_dandi_api_key=True)
+        job = await fetch_job(job_id, include_dandi_api_key=True, include_secret_params=True)
         if job is None:
             raise Exception(f"No job with ID {job_id}")
         

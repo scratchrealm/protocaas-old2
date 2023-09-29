@@ -9,16 +9,21 @@ class AppProcessorInput:
     """An input file of a processor in an app"""
     name: str
     help: str
+    list: str
     def get_spec(self):
-        return {
+        ret = {
             'name': self.name,
             'help': self.help
         }
+        if self.list:
+            ret['list'] = True
+        return ret
     @staticmethod
     def from_spec(spec):
         return AppProcessorInput(
             name=spec['name'],
-            help=spec['help']
+            help=spec['help'],
+            list=spec.get('list', False)
         )
 
 @dataclass
@@ -46,6 +51,7 @@ class AppProcessorParameter:
     type: Any
     default: Any
     options: Union[List[str], List[int], List[float], None]
+    secret: bool = False
     def get_spec(self):
         ret = {
             'name': self.name,
@@ -56,17 +62,21 @@ class AppProcessorParameter:
             ret['default'] = self.default
         if self.options is not None:
             ret['options'] = self.options
+        if self.secret:
+            ret['secret'] = True
         return ret
     @staticmethod
     def from_spec(spec):
         default = spec.get('default', _NO_DEFAULT)
         options = spec.get('options', None)
+        secret = spec.get('secret', False)
         return AppProcessorParameter(
             name=spec['name'],
             help=spec['help'],
             type=_type_from_string(spec['type']),
             default=default,
-            options=options
+            options=options,
+            secret=secret
         )
 
 @dataclass
@@ -158,7 +168,7 @@ class AppProcessor:
         parameters = getattr(processor_func, 'protocaas_parameters', [])
         attributes = getattr(processor_func, 'protocaas_attributes', [])
         tags = getattr(processor_func, 'protocaas_tags', [])
-        _inputs = [AppProcessorInput(name=i['name'], help=i['help']) for i in inputs]
+        _inputs = [AppProcessorInput(name=i['name'], help=i['help'], list=i['list']) for i in inputs]
         _outputs = [AppProcessorOutput(name=o['name'], help=o['help']) for o in outputs]
         _parameters = [AppProcessorParameter(name=p['name'], help=p['help'], type=p['type'], default=p['default'], options=p.get('options', None)) for p in parameters]
         _attributes = [AppProcessorAttribute(name=a['name'], value=a['value']) for a in attributes]

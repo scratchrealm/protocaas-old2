@@ -9,6 +9,7 @@ import { useProject } from '../ProjectPageContext';
 import './file-browser-table.css';
 import FileBrowserMenuBar from './FileBrowserMenuBar';
 import formatByteCount from './formatByteCount';
+import { DandiUploadTask } from '../dandiUpload/prepareDandiUploadTask';
 
 type Props = {
     width: number
@@ -18,6 +19,7 @@ type Props = {
     onDeleteFile: (path: string) => void
     hideSizeColumn?: boolean
     onRunBatchSpikeSorting?: (filePaths: string[]) => void
+    onDandiUpload?: (dandiUploadTask: DandiUploadTask) => void
 }
 
 type FileItem = {
@@ -114,7 +116,7 @@ type TreeNode = {
     file?: ProtocaasFile
 }
 
-const FileBrowser2: FunctionComponent<Props> = ({width, height, onOpenFile, files, hideSizeColumn, onRunBatchSpikeSorting}) => {
+const FileBrowser2: FunctionComponent<Props> = ({width, height, onOpenFile, files, hideSizeColumn, onRunBatchSpikeSorting, onDandiUpload}) => {
     const {currentTabName} = useProject()
 
     const rootNode = useMemo(() => {
@@ -273,6 +275,7 @@ const FileBrowser2: FunctionComponent<Props> = ({width, height, onOpenFile, file
                     selectedFileNames={Array.from(selectedFileNames)}
                     onResetSelection={() => selectedFileNamesDispatch({type: 'set', values: new Set()})}
                     onRunBatchSpikeSorting={onRunBatchSpikeSorting}
+                    onDandiUpload={onDandiUpload}
                 />
             </div>
             <div style={{position: 'absolute', width: width - hPadding * 2, height: height - menuBarHeight - vPadding * 2, top: menuBarHeight, overflowY: 'scroll', paddingLeft: hPadding, paddingRight: hPadding, paddingTop: vPadding, paddingBottom: vPadding}}>

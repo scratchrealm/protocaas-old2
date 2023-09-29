@@ -6,14 +6,16 @@ import FileEditor from "./FileEditor/FileEditor";
 import { useProject } from "./ProjectPageContext";
 import JobView from "./JobView/JobView";
 import { confirm } from "../../confirm_prompt_alert";
+import { DandiUploadTask } from "./dandiUpload/prepareDandiUploadTask";
 
 type ProjectFilesProps = {
     width: number
     height: number
     onRunBatchSpikeSorting?: (filePaths: string[]) => void
+    onDandiUpload?: (dandiUploadTask: DandiUploadTask) => void
 }
 
-const ProjectFiles: FunctionComponent<ProjectFilesProps> = ({width, height, onRunBatchSpikeSorting}) => {
+const ProjectFiles: FunctionComponent<ProjectFilesProps> = ({width, height, onRunBatchSpikeSorting, onDandiUpload}) => {
     const {files, openTab, deleteFile, closeTab, openTabs, refreshFiles} = useProject()
 
     const handleOpenFile = useCallback((fileName: string) => {
@@ -45,6 +47,7 @@ const ProjectFiles: FunctionComponent<ProjectFilesProps> = ({width, height, onRu
                 onDeleteFile={handleDeleteFile}
                 hideSizeColumn={false}
                 onRunBatchSpikeSorting={onRunBatchSpikeSorting}
+                onDandiUpload={onDandiUpload}
             />
             <ProjectTabWidget
                 width={0}
