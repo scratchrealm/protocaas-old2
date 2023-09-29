@@ -170,7 +170,7 @@ class AppProcessor:
         tags = getattr(processor_func, 'protocaas_tags', [])
         _inputs = [AppProcessorInput(name=i['name'], help=i['help'], list=i['list']) for i in inputs]
         _outputs = [AppProcessorOutput(name=o['name'], help=o['help']) for o in outputs]
-        _parameters = [AppProcessorParameter(name=p['name'], help=p['help'], type=p['type'], default=p['default'], options=p.get('options', None)) for p in parameters]
+        _parameters = [AppProcessorParameter(name=p['name'], help=p['help'], type=p['type'], default=p['default'], options=p.get('options', None), secret=p.get('secret', False)) for p in parameters]
         _attributes = [AppProcessorAttribute(name=a['name'], value=a['value']) for a in attributes]
         _tags = [AppProcessorTag(tag=t) for t in tags]
         return AppProcessor(
