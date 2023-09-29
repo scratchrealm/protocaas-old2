@@ -133,6 +133,7 @@ def load_project(project_id: str) -> Project:
 #     inputParameters: {
 #         name: string
 #         value?: any
+#         secret?: boolean
 #     }[]
 #     outputFiles: {
 #         name: string
@@ -153,4 +154,5 @@ def load_project(project_id: str) -> Project:
 #     timestampFinished?: number
 #     outputFileIds?: string[]
 #     processorSpec: ComputeResourceSpecProcessor
+#     dandiApiKey?: string
 # }

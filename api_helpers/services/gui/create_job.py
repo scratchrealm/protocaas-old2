@@ -105,9 +105,18 @@ async def create_job(
     if something_was_deleted:
         await _remove_detached_files_and_jobs(project_id)
     
-    input_parameters2 = [
-        ProtocaasJobInputParameter(**x.dict()) for x in input_parameters
-    ]
+    input_parameters2: List[ProtocaasJobInputParameter] = []
+    for input_parameter in input_parameters:
+        pp = next((x for x in processor_spec.parameters if x.name == input_parameter.name), None)
+        if not pp:
+            raise Exception(f"Processor parameter not found: {input_parameter.name}")
+        input_parameters2.append(
+            ProtocaasJobInputParameter(
+                name=input_parameter.name,
+                value=input_parameter.value,
+                secret=pp.secret
+            )
+        )
 
     job = ProtocaasJob(
         jobId=job_id,

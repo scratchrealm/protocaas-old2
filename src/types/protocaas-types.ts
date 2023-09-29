@@ -71,6 +71,7 @@ export type ProtocaasJob = {
     inputParameters: {
         name: string
         value?: any
+        secret?: boolean
     }[]
     outputFiles: {
         name: string
@@ -111,7 +112,8 @@ export const isProtocaasJob = (x: any): x is ProtocaasJob => {
         inputFileIds: isArrayOf(isString),
         inputParameters: isArrayOf(y => (validateObject(y, {
             name: isString,
-            value: optional(() => true)
+            value: optional(() => true),
+            secret: optional(isBoolean)
         }))),
         outputFiles: isArrayOf(y => (validateObject(y, {
             name: isString,
