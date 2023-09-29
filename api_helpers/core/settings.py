@@ -1,22 +1,25 @@
-from pydantic import BaseSettings
+from pydantic import BaseModel
 import os
 
+# Note: BaseSettings is no longer a part of pydantic package, and I didn't want to add a dependency on pydantic-settings
+# So I'm using BaseModel instead
 
-class Settings(BaseSettings):
+
+class Settings(BaseModel):
     # General app config
-    MONGO_URI = os.environ.get("MONGO_URI")
+    MONGO_URI: str = os.environ.get("MONGO_URI")
     
-    PUBNUB_SUBSCRIBE_KEY = os.environ.get("VITE_PUBNUB_SUBSCRIBE_KEY")
-    PUBNUB_PUBLISH_KEY = os.environ.get("PUBNUB_PUBLISH_KEY")
+    PUBNUB_SUBSCRIBE_KEY: str = os.environ.get("VITE_PUBNUB_SUBSCRIBE_KEY")
+    PUBNUB_PUBLISH_KEY: str = os.environ.get("PUBNUB_PUBLISH_KEY")
     
-    GITHUB_CLIENT_ID = os.environ.get("VITE_GITHUB_CLIENT_ID")
-    GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET")
+    GITHUB_CLIENT_ID: str = os.environ.get("VITE_GITHUB_CLIENT_ID")
+    GITHUB_CLIENT_SECRET: str = os.environ.get("GITHUB_CLIENT_SECRET")
     
-    DEFAULT_COUPUTE_RESOURCE_ID = os.environ.get("VITE_DEFAULT_COUPUTE_RESOURCE_ID")
+    DEFAULT_COUPUTE_RESOURCE_ID: str = os.environ.get("VITE_DEFAULT_COUPUTE_RESOURCE_ID")
 
-    OUTPUT_BUCKET_URI = os.environ.get("OUTPUT_BUCKET_URI")
-    OUTPUT_BUCKET_CREDENTIALS = os.environ.get("OUTPUT_BUCKET_CREDENTIALS")
-    OUTPUT_BUCKET_BASE_URL = os.environ.get("OUTPUT_BUCKET_BASE_URL")
+    OUTPUT_BUCKET_URI: str = os.environ.get("OUTPUT_BUCKET_URI")
+    OUTPUT_BUCKET_CREDENTIALS: str = os.environ.get("OUTPUT_BUCKET_CREDENTIALS")
+    OUTPUT_BUCKET_BASE_URL: str = os.environ.get("OUTPUT_BUCKET_BASE_URL")
 
 def get_settings():
     return Settings()
