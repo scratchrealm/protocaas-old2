@@ -14,7 +14,6 @@ import LoadNwbInPythonWindow from "../LoadNwbInPythonWindow/LoadNwbInPythonWindo
 import { useProject } from "../ProjectPageContext";
 import RunSpikeSortingWindow from "./RunSpikeSortingWindow/RunSpikeSortingWindow";
 import SpikeSortingOutputSection from "./SpikeSortingOutputSection/SpikeSortingOutputSection";
-import { get } from "http";
 import { getDandiApiHeaders } from "../DandiNwbSelector/DandiNwbSelector";
 
 
@@ -52,7 +51,8 @@ export const useNwbFile = (nwbUrl: string) => {
         let canceled = false
         if (!nwbUrl) return
         ; (async () => {
-            const f = await getRemoteH5File(nwbUrl, undefined)
+            const resolvedNwbUrl = await getResolvedUrl(nwbUrl)
+            const f = await getRemoteH5File(resolvedNwbUrl, undefined)
             if (canceled) return
             setNwbFile(f)
         })()
@@ -289,6 +289,81 @@ const RunSpikeSortingComponent: FunctionComponent<RunSpikeSortingComponentProps>
             </ul>
         </div>
     )
+}
+
+const getAuthorizationHeaderForUrl = (url?: string) => {
+    if (!url) return ''
+    let key = ''
+    if (url.startsWith('https://api-staging.dandiarchive.org/')) {
+      key = localStorage.getItem('dandiStagingApiKey') || ''
+    }
+    else if (url.startsWith('https://api.dandiarchive.org/')) {
+      key = localStorage.getItem('dandiApiKey') || ''
+    }
+    if (key) return 'token ' + key
+    else return ''
+}
+
+const getResolvedUrl = async (url: string) => {
+    if (isDandiAssetUrl(url)) {
+        const authorizationHeader = getAuthorizationHeaderForUrl(url)
+        const headers = authorizationHeader ? {Authorization: authorizationHeader} : undefined
+        const redirectUrl = await getRedirectUrl(url, headers)
+        if (redirectUrl) {
+            return redirectUrl
+        }
+    }
+    return url
+}
+
+const headRequest = async (url: string, headers?: any) => {
+    // Cannot use HEAD, because it is not allowed by CORS on DANDI AWS bucket
+    // let headResponse
+    // try {
+    //     headResponse = await fetch(url, {method: 'HEAD'})
+    //     if (headResponse.status !== 200) {
+    //         return undefined
+    //     }
+    // }
+    // catch(err: any) {
+    //     console.warn(`Unable to HEAD ${url}: ${err.message}`)
+    //     return undefined
+    // }
+    // return headResponse
+
+    // Instead, use aborted GET.
+    const controller = new AbortController();
+    const signal = controller.signal;
+    const response = await fetch(url, {
+        signal,
+        headers
+    })
+    controller.abort();
+    return response
+}
+
+const getRedirectUrl = async (url: string, headers: any) => {
+    // This is tricky. Normally we would do a HEAD request with a redirect: 'manual' option.
+    // and then look at the Location response header.
+    // However, we run into mysterious cors problems
+    // So instead, we do a HEAD request with no redirect option, and then look at the response.url
+    const response = await headRequest(url, headers)
+    if (response.url) return response.url
+  
+    // if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
+    //     return response.headers.get('Location')
+    // }
+
+    return null // No redirect
+  }
+
+const isDandiAssetUrl = (url: string) => {
+    if (url.startsWith('https://api-staging.dandiarchive.org/api/')) {
+      return true
+    }
+    if (url.startsWith('https://api.dandiarchive.org/api/')) {
+      return true
+    }
 }
 
 export default NwbFileEditor
