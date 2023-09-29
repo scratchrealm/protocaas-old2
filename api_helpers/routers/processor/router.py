@@ -1,4 +1,5 @@
 from typing import Union, List
+import aiohttp
 from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from ...services.processor.update_job_status import update_job_status
@@ -27,6 +28,7 @@ async def processor_get_job(job_id: str, job_private_key: str = Header(...)) -> 
             if not file.content.startswith('url:'):
                 raise Exception(f"Project file {input.fileName} is not a URL")
             url = file.content[len('url:'):]
+            url = await _resolve_dandi_url(url, dandi_api_key=job.dandiApiKey)
             inputs.append(ProcessorGetJobResponseInput(
                 name=input.name,
                 url=url
@@ -55,6 +57,17 @@ async def processor_get_job(job_id: str, job_private_key: str = Header(...)) -> 
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+async def _resolve_dandi_url(url: str, *, dandi_api_key: Union[str, None]) -> str:
+    if url.startswith('https://api.dandiarchive.org/api/') or url.startswith('https://api-staging.dandiarchive.org/api/'):
+        headers = {}
+        if dandi_api_key is not None:
+            headers['Authorization'] = f'token {dandi_api_key}'
+        async with aiohttp.ClientSession() as session:
+            async with session.head(url, allow_redirects=True, headers=headers) as resp:
+                return str(resp.url)
+    else:
+        return url
 
 # update job status
 class ProcessorUpdateJobStatusRequest(BaseModel):

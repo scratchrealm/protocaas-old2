@@ -91,6 +91,7 @@ export type ProtocaasJob = {
     timestampFinished?: number
     outputFileIds?: string[]
     processorSpec: ComputeResourceSpecProcessor
+    dandiApiKey?: string // not included in rest api responses
 }
 
 export const isProtocaasJob = (x: any): x is ProtocaasJob => {
@@ -130,7 +131,8 @@ export const isProtocaasJob = (x: any): x is ProtocaasJob => {
         timestampStarted: optional(isNumber),
         timestampFinished: optional(isNumber),
         outputFileIds: optional(isArrayOf(isString)),
-        processorSpec: isComputeResourceSpecProcessor
+        processorSpec: isComputeResourceSpecProcessor,
+        dandiApiKey: optional(isString)
     })
 }
 

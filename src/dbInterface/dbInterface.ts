@@ -350,17 +350,41 @@ export const createJob = async (
         projectId: string,
         jobDefinition: ProtocaasProcessingJobDefinition,
         processorSpec: ComputeResourceSpecProcessor,
+        files: ProtocaasFile[],
         batchId?: string
     },
     auth: Auth
 ) : Promise<string> => {
-    const {workspaceId, projectId, jobDefinition, processorSpec, batchId} = a
+    const {workspaceId, projectId, jobDefinition, processorSpec, files, batchId} = a
     const processorName = jobDefinition.processorName
     const inputFiles = jobDefinition.inputFiles
     const inputParameters = jobDefinition.inputParameters
     const outputFiles = jobDefinition.outputFiles
     const url = `/api/gui/jobs`
-    const body = {
+    let needToSendDandiApiKey = false
+    let needToSendDandiStagingApiKey = false
+    for (const inputFile of inputFiles) {
+        const ff = files.find(f => f.fileName === inputFile.fileName)
+        if (ff) {
+            if (ff.content.startsWith('url:')) {
+                const url = ff.content.slice('url:'.length)
+                if (url.startsWith('https://api.dandiarchive.org/api/')) {
+                    needToSendDandiApiKey = true
+                }
+                if (url.startsWith('https://api-staging.dandiarchive.org/api/')) {
+                    needToSendDandiStagingApiKey = true
+                }
+            }
+        }
+    }
+    let dandiApiKey: string | undefined = undefined
+    if (needToSendDandiApiKey) {
+        dandiApiKey = localStorage.getItem('dandiApiKey') || undefined
+    }
+    else if (needToSendDandiStagingApiKey) {
+        dandiApiKey = localStorage.getItem('dandiStagingApiKey') || undefined
+    }
+    const body: {[key: string]: any} = {
         workspaceId,
         projectId,
         processorName,
@@ -369,6 +393,9 @@ export const createJob = async (
         outputFiles,
         processorSpec,
         batchId
+    }
+    if (dandiApiKey) {
+        body.dandiApiKey = dandiApiKey
     }
     const response = await postRequest(url, body, auth)
     if (!response.success) throw Error(`Error in createJob: ${response.error}`)

@@ -30,7 +30,8 @@ async def create_job(
     input_parameters: List[CreateJobRequestInputParameter],
     processor_spec: ComputeResourceSpecProcessor,
     batch_id: Union[str, None],
-    user_id: str
+    user_id: str,
+    dandi_api_key: Union[str, None] = None
 ):
     workspace = await fetch_workspace(workspace_id)
     
@@ -123,7 +124,8 @@ async def create_job(
         computeResourceId=compute_resource_id,
         status='pending',
         processorSpec=processor_spec,
-        batchId=batch_id
+        batchId=batch_id,
+        dandiApiKey=dandi_api_key
     )
     
     await insert_job(job)

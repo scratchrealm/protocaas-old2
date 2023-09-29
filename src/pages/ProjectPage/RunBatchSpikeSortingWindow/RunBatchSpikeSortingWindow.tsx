@@ -117,6 +117,7 @@ const RunBatchSpikeSortingWindow: FunctionComponent<Props> = ({ filePaths, onClo
                 projectId,
                 jobDefinition: jobDefinition2,
                 processorSpec: processor,
+                files,
                 batchId
             }
             console.log('CREATING JOB', job)

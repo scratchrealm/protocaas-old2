@@ -79,6 +79,7 @@ const SpikeSortingOutputSection: FunctionComponent<SpikeSortingOutputSectionProp
         if (!spikeSortingFigurlProcessor) return
         if (!recordingFileName) return
         if (!electricalSeriesPath) return
+        if (!files) return
         const jobDefinition: ProtocaasProcessingJobDefinition = {
             processorName: spikeSortingFigurlProcessor.name,
             inputFiles: [
@@ -109,9 +110,10 @@ const SpikeSortingOutputSection: FunctionComponent<SpikeSortingOutputSectionProp
             projectId,
             jobDefinition,
             processorSpec: spikeSortingFigurlProcessor,
+            files,
             batchId: undefined
         }, auth)
-    }, [spikeSortingFigurlProcessor, workspaceId, projectId, recordingFileName, auth, fileName, electricalSeriesPath])
+    }, [spikeSortingFigurlProcessor, workspaceId, projectId, recordingFileName, auth, fileName, electricalSeriesPath, files])
 
     const handleOpenSpikeSortingView = useCallback(async () => {
         if (!spikeSortingFigurlFile) return

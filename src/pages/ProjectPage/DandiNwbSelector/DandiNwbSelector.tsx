@@ -67,8 +67,8 @@ const DandiNwbSelector: FunctionComponent<Props> = ({width, height, onNwbFilesSe
                 const json = await response.json()
                 const assetResponse: AssetResponse = json
                 let nwbUrl: string | undefined
-                if (!nwbUrl) nwbUrl = assetResponse.contentUrl.find(url => url.startsWith('https://api.dandiarchive.org/'))
-                if (!nwbUrl) nwbUrl = assetResponse.contentUrl.find(url => url.startsWith('https://api-staging.dandiarchive.org/'))
+                if (!nwbUrl) nwbUrl = assetResponse.contentUrl.find(url => url.startsWith('https://api.dandiarchive.org/api/'))
+                if (!nwbUrl) nwbUrl = assetResponse.contentUrl.find(url => url.startsWith('https://api-staging.dandiarchive.org/api/'))
                 if (!nwbUrl) nwbUrl = assetResponse.contentUrl.find(url => url.includes('amazonaws.com'))
                 if (!nwbUrl) nwbUrl = assetResponse.contentUrl[0]
                 if (!nwbUrl) return

@@ -14,7 +14,7 @@ type RunSpikeSortingWindowProps = {
 }
 
 const RunSpikeSortingWindow: FunctionComponent<RunSpikeSortingWindowProps> = ({fileName, onClose, spikeSortingProcessorName, nwbFile}) => {
-    const {projectId, workspaceId} = useProject()
+    const {projectId, workspaceId, files} = useProject()
     const {computeResource} = useWorkspace()
 
     const allProcessors = useMemo(() => {
@@ -64,15 +64,16 @@ const RunSpikeSortingWindow: FunctionComponent<RunSpikeSortingWindowProps> = ({f
         if (!spikeSortingProcessorName) return
         if (!jobDefinition) return
         if (!processor) return
+        if (!files) return
         setSubmitting(true)
         try {
-            await createJob({workspaceId, projectId, jobDefinition, processorSpec: processor}, auth)
+            await createJob({workspaceId, projectId, jobDefinition, processorSpec: processor, files}, auth)
             onClose()
         }
         finally {
             setSubmitting(false)
         }
-    }, [workspaceId, projectId, jobDefinition, auth, spikeSortingProcessorName, onClose, processor])
+    }, [workspaceId, projectId, jobDefinition, auth, spikeSortingProcessorName, onClose, processor, files])
 
     const [valid, setValid] = useState<boolean>(false)
     const submitEnabled = !submitting && valid && !!processor

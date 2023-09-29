@@ -96,6 +96,7 @@ class ProtocaasJob(BaseModel):
     timestampFinished: Union[float, None]=None
     outputFileIds: Union[List[str], None]=None
     processorSpec: ComputeResourceSpecProcessor
+    dandiApiKey: Union[str, None]=None
 
 class ProtocaasFile(BaseModel):
     projectId: str

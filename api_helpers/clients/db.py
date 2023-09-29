@@ -110,6 +110,8 @@ async def fetch_project_jobs(project_id: str, include_private_keys=False) -> Lis
     if not include_private_keys:
         for job in jobs:
             job.jobPrivateKey = '' # hide the private key
+    for job in jobs:
+        job.dandiApiKey = None # hide the DANDI API key
     return jobs
 
 async def update_project(project_id: str, update: dict):
@@ -222,7 +224,9 @@ async def fetch_compute_resource_jobs(compute_resource_id: str, statuses: Union[
     jobs = [ProtocaasJob(**job) for job in jobs] # validate jobs
     if not include_private_keys:
         for job in jobs:
-            job.jobPrivateKey = ''
+            job.jobPrivateKey = '' # hide the private key
+    for job in jobs:
+        job.dandiApiKey = None # hide the DANDI API key
     return jobs
 
 async def update_compute_resource_node(compute_resource_id: str, compute_resource_node_id: str, compute_resource_node_name: str):
@@ -260,6 +264,7 @@ async def fetch_job(job_id: str):
     if job is None:
         return None
     job = ProtocaasJob(**job) # validate job
+    job.dandiApiKey = None # hide the DANDI API key
     return job
 
 async def update_job(job_id: str, update: dict):

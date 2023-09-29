@@ -15,7 +15,7 @@ class Settings(BaseModel):
     GITHUB_CLIENT_ID: str = os.environ.get("VITE_GITHUB_CLIENT_ID")
     GITHUB_CLIENT_SECRET: str = os.environ.get("GITHUB_CLIENT_SECRET")
     
-    DEFAULT_COUPUTE_RESOURCE_ID: str = os.environ.get("VITE_DEFAULT_COUPUTE_RESOURCE_ID")
+    DEFAULT_COMPUTE_RESOURCE_ID: str = os.environ.get("VITE_DEFAULT_COMPUTE_RESOURCE_ID")
 
     OUTPUT_BUCKET_URI: str = os.environ.get("OUTPUT_BUCKET_URI")
     OUTPUT_BUCKET_CREDENTIALS: str = os.environ.get("OUTPUT_BUCKET_CREDENTIALS")

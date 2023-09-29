@@ -30,6 +30,7 @@ class CreateJobRequest(BaseModel):
     inputParameters: List[CreateJobRequestInputParameter]
     processorSpec: ComputeResourceSpecProcessor
     batchId: Union[str, None] = None
+    dandiApiKey: Union[str, None] = None
 
 class CreateJobResponse(BaseModel):
     jobId: str
@@ -52,6 +53,7 @@ async def create_job_handler(data: CreateJobRequest, github_access_token: str=He
         input_parameters = data.inputParameters
         processor_spec = data.processorSpec
         batch_id = data.batchId
+        dandi_api_key = data.dandiApiKey
 
         job_id = await create_job(
             workspace_id=workspace_id,
@@ -62,7 +64,8 @@ async def create_job_handler(data: CreateJobRequest, github_access_token: str=He
             input_parameters=input_parameters,
             processor_spec=processor_spec,
             batch_id=batch_id,
-            user_id=user_id
+            user_id=user_id,
+            dandi_api_key=dandi_api_key
         )
 
         return CreateJobResponse(
