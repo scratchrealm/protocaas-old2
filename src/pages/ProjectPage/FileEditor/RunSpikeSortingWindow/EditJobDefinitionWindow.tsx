@@ -12,6 +12,7 @@ import { useElectricalSeriesPaths } from "../NwbFileEditor";
 type EditJobDefinitionWindowProps = {
     jobDefinition: ProtocaasProcessingJobDefinition | undefined
     jobDefinitionDispatch?: (action: ProtocaasProcessingJobDefinitionAction) => void
+    secretParameterNames?: string[]
     processor: ComputeResourceSpecProcessor
     nwbFile?: RemoteH5File
     setValid?: (valid: boolean) => void
@@ -42,7 +43,7 @@ const validParametersReducer = (state: validParametersState, action: validParame
     else return state
 }
 
-const EditJobDefinitionWindow: FunctionComponent<EditJobDefinitionWindowProps> = ({jobDefinition, jobDefinitionDispatch, processor, nwbFile, setValid, readOnly, show='all', fileLinks}) => {
+const EditJobDefinitionWindow: FunctionComponent<EditJobDefinitionWindowProps> = ({jobDefinition, jobDefinitionDispatch, secretParameterNames, processor, nwbFile, setValid, readOnly, show='all', fileLinks}) => {
     const setParameterValue = useCallback((name: string, value: any) => {
         jobDefinitionDispatch && jobDefinitionDispatch({
             type: 'setInputParameter',
@@ -118,6 +119,7 @@ const EditJobDefinitionWindow: FunctionComponent<EditJobDefinitionWindowProps> =
                         parameter={parameter}
                         value={jobDefinition?.inputParameters.find(f => (f.name === parameter.name))?.value}
                         nwbFile={nwbFile}
+                        secret={secretParameterNames?.includes(parameter.name)}
                         setValue={value => {
                             setParameterValue(parameter.name, value)
                         }}
@@ -134,7 +136,7 @@ const EditJobDefinitionWindow: FunctionComponent<EditJobDefinitionWindowProps> =
             })
         }
         return ret
-    }, [processor, jobDefinition, nwbFile, setParameterValue, readOnly, fileLinks, show])
+    }, [jobDefinition, processor, nwbFile, setParameterValue, readOnly, show, secretParameterNames, fileLinks])
     return (
         <div>
             <table className="table1">
@@ -235,9 +237,10 @@ type ParameterRowProps = {
     setValue: (value: any) => void
     setValid: (valid: boolean) => void
     readOnly?: boolean
+    secret?: boolean
 }
 
-const ParameterRow: FunctionComponent<ParameterRowProps> = ({parameter, value, nwbFile, setValue, setValid, readOnly}) => {
+const ParameterRow: FunctionComponent<ParameterRowProps> = ({parameter, value, nwbFile, setValue, setValid, readOnly, secret}) => {
     const {type, name, help} = parameter
     const [isValid, setIsValid] = useState<boolean>(false)
     return (
@@ -250,7 +253,18 @@ const ParameterRow: FunctionComponent<ParameterRowProps> = ({parameter, value, n
             <td>
                 {
                     readOnly ? (
-                        value
+                        <span>
+                            {value}
+                            {
+                                // we don't want to rely on the display to hide the secret
+                                // if it is a secret the value should be empty
+                                // if that's not the case, it's better that we see it here
+                                // so we can know there is an issue with secrets being displayed
+                                secret && (
+                                    <span style={{color: 'darkgreen'}}> (secret)</span>
+                                )
+                            }
+                        </span>
                     ) : (
                         <EditParameterValue
                             parameter={parameter}

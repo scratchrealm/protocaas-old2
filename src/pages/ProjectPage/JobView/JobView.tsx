@@ -42,6 +42,10 @@ const useJob = (jobId: string) => {
 
 const JobView: FunctionComponent<Props> = ({ width, height, jobId }) => {
     const {job, refreshJob} = useJob(jobId)
+    const secretParameterNames = useMemo(() => {
+        if (!job) return []
+        return job.processorSpec.parameters.filter(p => p.secret).map(p => p.name)
+    }, [job])
     const jobDefinition: ProtocaasProcessingJobDefinition = useMemo(() => {
         if (!job) return defaultJobDefinition
         const ret: ProtocaasProcessingJobDefinition = {
@@ -122,6 +126,7 @@ const JobView: FunctionComponent<Props> = ({ width, height, jobId }) => {
                 <EditJobDefinitionWindow
                     processor={job.processorSpec}
                     jobDefinition={jobDefinition}
+                    secretParameterNames={secretParameterNames}
                     readOnly={true}
                     show={'parameters'}
                     fileLinks={true}
