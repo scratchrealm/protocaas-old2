@@ -22,7 +22,7 @@ const MainWindow: FunctionComponent<Props> = () => {
     const {width, height} = useWindowDimensions()
     return (
         <SetupSPMain>
-            <div style={{position: 'absolute', width, height}}>
+            <div style={{position: 'absolute', width, height, overflow: 'hidden'}}>
                 <div style={{position: 'absolute', width, height: applicationBarHeight}}>
                     <ApplicationBar />
                 </div>

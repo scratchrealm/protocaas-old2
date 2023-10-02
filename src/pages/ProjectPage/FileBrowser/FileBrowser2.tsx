@@ -337,7 +337,9 @@ const FileBrowser2: FunctionComponent<Props> = ({width, height, onOpenFile, file
                                             <span style={{whiteSpace: 'nowrap'}}>{timeAgoString(x.timestampCreated)}</span>
                                         )}
                                     </td>
-                                    {!hideSizeColumn && x.type === 'file' && <td>{formatByteCount(x.size)}</td>}
+                                    {!hideSizeColumn && (
+                                        x.type === 'file' ? <td>{formatByteCount(x.size)}</td> : <td />
+                                    )}
                                 </tr>
                             ))
                         }

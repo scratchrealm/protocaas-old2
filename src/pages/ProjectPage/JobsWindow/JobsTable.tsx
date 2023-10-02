@@ -86,6 +86,10 @@ const JobsTable: FunctionComponent<Props> = ({ width, height, fileName, jobs, on
             else if (statuses.some(s => s === 'running')) {
                 status = 'running'
             }
+            // some status is queued
+            else if (statuses.some(s => s === 'pending')) {
+                status = 'pending'
+            }
             else {
                 status = 'unknown' // should not happen
             }
