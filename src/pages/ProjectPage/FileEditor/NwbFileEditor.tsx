@@ -1,20 +1,18 @@
 import { FunctionComponent, useCallback, useEffect, useMemo, useState } from "react";
 import { useModalDialog } from "../../../ApplicationBar";
+import { useGithubAuth } from "../../../GithubAuth/useGithubAuth";
+import { RemoteH5File, getRemoteH5File } from "../../../RemoteH5File/RemoteH5File";
 import Hyperlink from "../../../components/Hyperlink";
 import ModalWindow from "../../../components/ModalWindow/ModalWindow";
 import Splitter from "../../../components/Splitter";
 import { fetchFile } from "../../../dbInterface/dbInterface";
-import { useGithubAuth } from "../../../GithubAuth/useGithubAuth";
-import { getRemoteH5File, RemoteH5File } from "../../../RemoteH5File/RemoteH5File";
-import { ComputeResourceSpecProcessor, ProtocaasFile } from "../../../types/protocaas-types";
-import { useWorkspace } from "../../WorkspacePage/WorkspacePageContext";
-import { AssetResponse } from "../DandiNwbSelector/types";
+import { ProtocaasFile } from "../../../types/protocaas-types";
+import { getDandiApiHeaders } from "../DandiImport/DandiNwbSelector";
+import { AssetResponse } from "../DandiImport/types";
 import JobsWindow from "../JobsWindow/JobsWindow";
 import LoadNwbInPythonWindow from "../LoadNwbInPythonWindow/LoadNwbInPythonWindow";
 import { useProject } from "../ProjectPageContext";
-import RunSpikeSortingWindow from "./RunSpikeSortingWindow/RunSpikeSortingWindow";
 import SpikeSortingOutputSection from "./SpikeSortingOutputSection/SpikeSortingOutputSection";
-import { getDandiApiHeaders } from "../DandiNwbSelector/DandiNwbSelector";
 
 
 type Props = {
@@ -146,9 +144,6 @@ const NwbFileEditorChild: FunctionComponent<Props> = ({fileName, width, height})
         console.warn(`Mismatch between dandiAssetPath (${dandiAssetPath}) and assetResponse.path (${assetResponse.path})`)
     }
 
-    const {visible: runSpikeSortingWindowVisible, handleOpen: openRunSpikeSortingWindow, handleClose: closeRunSpikeSortingWindow} = useModalDialog()
-    const [selectedSpikeSortingProcessor, setSelectedSpikeSortingProcessor] = useState<string | undefined>(undefined)
-
     const {visible: loadNwbInPythonWindowVisible, handleOpen: openLoadNwbInPythonWindow, handleClose: closeLoadNwbInPythonWindow} = useModalDialog()
 
     const spikeSortingJob = useMemo(() => {
@@ -217,29 +212,7 @@ const NwbFileEditorChild: FunctionComponent<Props> = ({fileName, width, height})
                 )
             }
             <div>&nbsp;</div>
-            {
-                electricalSeriesPaths && (
-                    electricalSeriesPaths.length > 0 ? (
-                        <RunSpikeSortingComponent
-                            onSelect={(processorName) => {setSelectedSpikeSortingProcessor(processorName); openRunSpikeSortingWindow();}}
-                        />
-                    ) : (
-                        <div>No electrical series found</div>
-                    )       
-                )
-            }
             <hr />
-            <ModalWindow
-                open={runSpikeSortingWindowVisible}
-                onClose={closeRunSpikeSortingWindow}
-            >
-                <RunSpikeSortingWindow
-                    onClose={closeRunSpikeSortingWindow}
-                    fileName={fileName}
-                    spikeSortingProcessorName={selectedSpikeSortingProcessor}
-                    nwbFile={nwbFile}
-                />
-            </ModalWindow>
             <ModalWindow
                 open={loadNwbInPythonWindowVisible}
                 onClose={closeLoadNwbInPythonWindow}
@@ -250,43 +223,6 @@ const NwbFileEditorChild: FunctionComponent<Props> = ({fileName, width, height})
                     fileName={fileName}
                 />}
             </ModalWindow>
-        </div>
-    )
-}
-
-type RunSpikeSortingComponentProps = {
-    onSelect?: (processorName: string) => void
-}
-
-const RunSpikeSortingComponent: FunctionComponent<RunSpikeSortingComponentProps> = ({onSelect}) => {
-    const {computeResource} = useWorkspace()
-    const spikeSorterProcessors = useMemo(() => {
-        const ret: ComputeResourceSpecProcessor[] = []
-        for (const app of computeResource?.spec?.apps || []) {
-            for (const p of app.processors || []) {
-                if (p.tags.map(t => t.tag).includes('spike_sorter')) {
-                    ret.push(p)
-                }
-            }
-        }
-        return ret
-    }, [computeResource])
-    if (!computeResource) return <div>Loading compute resource spec...</div>
-    if (spikeSorterProcessors.length === 0) return <div>No spike sorter processors found</div>
-    return (
-        <div>
-            Run spike sorting using:
-            <ul>
-                {
-                    spikeSorterProcessors.map((processor, i) => (
-                        <li key={i}>
-                            <Hyperlink onClick={() => {onSelect && onSelect(processor.name)}}>
-                                {processor.name}
-                            </Hyperlink>
-                        </li>
-                    ))
-                }
-            </ul>
         </div>
     )
 }

@@ -9,7 +9,7 @@ import { useProject } from '../ProjectPageContext';
 import './file-browser-table.css';
 import FileBrowserMenuBar from './FileBrowserMenuBar';
 import formatByteCount from './formatByteCount';
-import { DandiUploadTask } from '../dandiUpload/prepareDandiUploadTask';
+import { DandiUploadTask } from '../DandiUpload/prepareDandiUploadTask';
 
 type Props = {
     width: number

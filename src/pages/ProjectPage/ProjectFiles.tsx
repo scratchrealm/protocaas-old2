@@ -6,7 +6,7 @@ import FileEditor from "./FileEditor/FileEditor";
 import { useProject } from "./ProjectPageContext";
 import JobView from "./JobView/JobView";
 import { confirm } from "../../confirm_prompt_alert";
-import { DandiUploadTask } from "./dandiUpload/prepareDandiUploadTask";
+import { DandiUploadTask } from "./DandiUpload/prepareDandiUploadTask";
 
 type ProjectFilesProps = {
     width: number

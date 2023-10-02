@@ -5,9 +5,9 @@ import { useGithubAuth } from "../../../GithubAuth/useGithubAuth"
 import { ComputeResourceSpecProcessor, ProtocaasFile } from "../../../types/protocaas-types"
 import { useWorkspace } from "../../WorkspacePage/WorkspacePageContext"
 import { useNwbFile } from "../FileEditor/NwbFileEditor"
-import EditJobDefinitionWindow from "../FileEditor/RunSpikeSortingWindow/EditJobDefinitionWindow"
 import { useProject } from "../ProjectPageContext"
 import { createJob } from "../../../dbInterface/dbInterface"
+import EditJobDefinitionWindow from "../EditJobDefinitionWindow/EditJobDefinitionWindow"
 
 type Props = {
     filePaths: string[]
@@ -70,29 +70,29 @@ const RunBatchSpikeSortingWindow: FunctionComponent<Props> = ({ filePaths, onClo
         })
     }, [processor])
 
-    const [pcFile, setProtocaasFile] = useState<ProtocaasFile | undefined>(undefined)
+    const [representativeProtocaasFile, setRepresentativeProtocaasFile] = useState<ProtocaasFile | undefined>(undefined)
     useEffect(() => {
         let canceled = false
         if (filePaths.length === 0) return
         ; (async () => {
             const f = await fetchFile(projectId, filePaths[0], auth)
             if (canceled) return
-            setProtocaasFile(f)
+            setRepresentativeProtocaasFile(f)
         })()
         return () => {canceled = true}
     }, [filePaths, projectId, auth])
 
-    const cc = pcFile?.content || ''
+    const cc = representativeProtocaasFile?.content || ''
     const nwbUrl = cc.startsWith('url:') ? cc.slice('url:'.length) : ''
-    const nwbFile = useNwbFile(nwbUrl)
+    const representativeNwbFile = useNwbFile(nwbUrl)
 
     const [valid, setValid] = useState(false)
 
     const [overwriteExistingOutputs, setOverwriteExistingOutputs] = useState(false)
-    const [outputPrefix, setOutputPrefix] = useState('')
+    const [descriptionString, setDescriptionString] = useState('')
     useEffect(() => {
         if (!processor) return
-        setOutputPrefix(`.${processor.name}`)
+        setDescriptionString(formDescriptionStringFromProcessorName(processor.name))
     }, [processor])
 
     const handleSubmit = useCallback(async () => {
@@ -104,8 +104,9 @@ const RunBatchSpikeSortingWindow: FunctionComponent<Props> = ({ filePaths, onClo
         const batchId = createRandomId(8)
         for (let i = 0; i < filePaths.length; i++) {
             const filePath = filePaths[i]
+            const filePath2 = filePath.startsWith('imported/') ? filePath.slice('imported/'.length) : filePath
             const jobDefinition2: ProtocaasProcessingJobDefinition = deepCopy(jobDefinition)
-            const outputFileName = `${outputPrefix}/${appendSorterDescToNwbPath(filePath, selectedSpikeSortingProcessor)}`
+            const outputFileName = `generated/${appendDescToNwbPath(filePath2, descriptionString)}`
             const outputExists = files.find(f => (f.fileName === outputFileName))
             if (outputExists && !overwriteExistingOutputs) {
                 continue
@@ -127,7 +128,22 @@ const RunBatchSpikeSortingWindow: FunctionComponent<Props> = ({ filePaths, onClo
         setOperatingMessage(undefined)
         setOperating(false)
         onClose()
-    }, [workspaceId, projectId, jobDefinition, processor, filePaths, files, overwriteExistingOutputs, outputPrefix, auth, onClose, selectedSpikeSortingProcessor])
+    }, [workspaceId, projectId, jobDefinition, processor, filePaths, files, overwriteExistingOutputs, descriptionString, auth, onClose, selectedSpikeSortingProcessor])
+
+    const descriptionStringIsValid = useMemo(() => {
+        // description string must be alphanumeric with dashes but not underscores
+        if (!descriptionString) return false
+        if (!descriptionString.match(/^[a-zA-Z0-9-]+$/)) return false
+        return true
+    }, [descriptionString])
+
+    const okayToSubmit = useMemo(() => {
+        if (!valid) return false
+        if (operating) return false
+        if (!processor) return false
+        if (!descriptionStringIsValid) return false
+        return true
+    }, [valid, operating, processor, descriptionStringIsValid])
 
     if (!selectedSpikeSortingProcessor) {
         return (
@@ -150,9 +166,14 @@ const RunBatchSpikeSortingWindow: FunctionComponent<Props> = ({ filePaths, onClo
                             </td>
                         </tr>
                         <tr>
-                            <td>Output prefix</td>
+                            <td>Description string in output file name</td>
                             <td>
-                                <input type="text" value={outputPrefix} onChange={evt => setOutputPrefix(evt.target.value)} /> {`/*`}
+                                <input type="text" value={descriptionString} onChange={evt => setDescriptionString(evt.target.value)} /> {`/*`}
+                                {
+                                    !descriptionStringIsValid && (
+                                        <span style={{color: 'red'}}>Invalid description string</span>
+                                    )
+                                }
                             </td>
                         </tr>
                     </tbody>
@@ -160,7 +181,7 @@ const RunBatchSpikeSortingWindow: FunctionComponent<Props> = ({ filePaths, onClo
             </div>
             <div>&nbsp;</div>
             <div>
-                <button disabled={!valid || operating} onClick={handleSubmit}>Submit</button>
+                <button disabled={!okayToSubmit} onClick={handleSubmit}>Submit</button>
                 &nbsp;
                 {
                     operatingMessage && (
@@ -180,7 +201,7 @@ const RunBatchSpikeSortingWindow: FunctionComponent<Props> = ({ filePaths, onClo
                     jobDefinition={jobDefinition}
                     jobDefinitionDispatch={jobDefinitionDispatch}
                     processor={processor}
-                    nwbFile={nwbFile}
+                    nwbFile={representativeNwbFile}
                     setValid={setValid}
                     readOnly={operating}
                 />
@@ -227,16 +248,26 @@ const createRandomId = (numChars: number) => {
     return ret
 }
 
-const appendSorterDescToNwbPath = (nwbPath: string, processorName: string) => {
+const appendDescToNwbPath = (nwbPath: string, desc: string) => {
     // for example, sub-paired-english_ses-paired-english-m26-190524-100859-cell3_ecephys.nwb goes to sub-paired-english_ses-paired-english-m26-190524-100859-cell3_ecephys_desc-{processorName}.nwb
     const parts = nwbPath.split('.')
     const ext = parts.pop()
-    const pp = replaceUnderscoreWithDash(processorName)
+    const pp = replaceUnderscoreWithDash(desc)
     return `${parts.join('.')}_desc-${pp}.${ext}`
 }
 
 const replaceUnderscoreWithDash = (x: string) => {
     return x.split('_').join('-')
+}
+
+export const formDescriptionStringFromProcessorName = (processorName: string) => {
+    let ret = processorName
+    // replace spaces and underscores with dashes
+    ret = ret.split(' ').join('-')
+    ret = ret.split('_').join('-')
+    // remove non-alphanumeric characters
+    ret = ret.replace(/[^a-zA-Z0-9-]/g, '')
+    return ret
 }
 
 export default RunBatchSpikeSortingWindow

@@ -82,7 +82,7 @@ export type ProtocaasJob = {
     computeResourceId: string
     status: 'pending' | 'queued' | 'starting' | 'running' | 'completed' | 'failed'
     error?: string
-    processVersion?: string
+    processorVersion?: string
     computeResourceNodeId?: string
     computeResourceNodeName?: string
     consoleOutput?: string
@@ -124,7 +124,7 @@ export const isProtocaasJob = (x: any): x is ProtocaasJob => {
         computeResourceId: isString,
         status: isOneOf([isEqualTo('pending'), isEqualTo('queued'), isEqualTo('starting'), isEqualTo('running'), isEqualTo('completed'), isEqualTo('failed')]),
         error: optional(isString),
-        processVersion: optional(isString),
+        processorVersion: optional(isString),
         computeResourceNodeId: optional(isString),
         computeResourceNodeName: optional(isString),
         consoleOutput: optional(isString),

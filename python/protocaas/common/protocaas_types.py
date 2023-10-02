@@ -89,7 +89,7 @@ class ProtocaasJob(BaseModel):
     computeResourceId: str
     status: str # 'pending' | 'queued' | 'starting' | 'running' | 'completed' | 'failed'
     error: Union[str, None]=None
-    processVersion: Union[str, None]=None
+    processorVersion: Union[str, None]=None
     computeResourceNodeId: Union[str, None]=None
     computeResourceNodeName: Union[str, None]=None
     consoleOutput: Union[str, None]=None

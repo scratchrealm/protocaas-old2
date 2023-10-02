@@ -4,8 +4,7 @@ import { defaultJobDefinition, fetchJob, ProtocaasProcessingJobDefinition } from
 import { useGithubAuth } from "../../../GithubAuth/useGithubAuth";
 import { ProtocaasJob } from "../../../types/protocaas-types";
 import UserIdComponent from "../../../UserIdComponent";
-import EditJobDefinitionWindow from "../FileEditor/RunSpikeSortingWindow/EditJobDefinitionWindow";
-import OutputsTable from "./OutputsTable";
+import EditJobDefinitionWindow from "../EditJobDefinitionWindow/EditJobDefinitionWindow";
 
 type Props = {
     width: number,

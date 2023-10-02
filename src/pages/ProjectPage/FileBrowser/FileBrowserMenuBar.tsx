@@ -3,7 +3,7 @@ import { FunctionComponent, useCallback, useMemo, useState } from "react"
 import SmallIconButton from "../../../components/SmallIconButton"
 import { confirm } from "../../../confirm_prompt_alert"
 import { useProject } from "../ProjectPageContext"
-import prepareDandiUploadTask, { DandiUploadTask } from "../dandiUpload/prepareDandiUploadTask"
+import prepareDandiUploadTask, { DandiUploadTask } from "../DandiUpload/prepareDandiUploadTask"
 
 type FileBrowserMenuBarProps = {
     width: number

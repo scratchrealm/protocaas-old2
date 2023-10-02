@@ -144,7 +144,7 @@ def load_project(project_id: str) -> Project:
 #     computeResourceId: string
 #     status: 'pending' | 'queued' | 'starting' | 'running' | 'completed' | 'failed'
 #     error?: string
-#     processVersion?: string
+#     processorVersion?: string
 #     computeResourceNodeId?: string
 #     computeResourceNodeName?: string
 #     consoleOutput?: string

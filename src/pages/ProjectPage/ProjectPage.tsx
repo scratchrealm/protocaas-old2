@@ -7,7 +7,7 @@ import { useGithubAuth } from "../../GithubAuth/useGithubAuth";
 import useRoute from "../../useRoute";
 import ComputeResourcesPage from "../ComputeResourcePage/ComputeResourcePage";
 import { SetupWorkspacePage, useWorkspace } from "../WorkspacePage/WorkspacePageContext";
-import DandiNwbSelector from "./DandiNwbSelector/DandiNwbSelector";
+import DandiNwbSelector from "./DandiImport/DandiNwbSelector";
 import ManualNwbSelector from "./ManualNwbSelector/ManualNwbSelector";
 import ProcessorsView from "./ProcessorsView";
 import ProjectFiles from "./ProjectFiles";
@@ -16,8 +16,8 @@ import ProjectJobs from "./ProjectJobs";
 import { SetupProjectPage, useProject } from "./ProjectPageContext";
 import RunBatchSpikeSortingWindow from "./RunBatchSpikeSortingWindow/RunBatchSpikeSortingWindow";
 import { SetupComputeResources } from "../ComputeResourcesPage/ComputeResourcesContext";
-import { DandiUploadTask } from "./dandiUpload/prepareDandiUploadTask";
-import DandiUploadWindow from "./dandiUpload/DandiUploadWindow";
+import { DandiUploadTask } from "./DandiUpload/prepareDandiUploadTask";
+import DandiUploadWindow from "./DandiUpload/DandiUploadWindow";
 
 type Props = {
     width: number
@@ -176,7 +176,7 @@ const MainPanel: FunctionComponent<MainPanelProps> = ({width, height}) => {
         }[] = []
         for (const file of files) {
             const stagingStr = file.useStaging ? 'staging-' : ''
-            const fileName = stagingStr + file.dandisetId + '/' + file.assetPath
+            const fileName = 'imported/' + stagingStr + file.dandisetId + '/' + file.assetPath
             const metadata = {
                 dandisetId: file.dandisetId,
                 dandisetVersion: file.dandisetVersion,

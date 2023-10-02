@@ -1,10 +1,10 @@
 import { FunctionComponent, useCallback, useMemo } from "react";
-import { DandiUploadTask } from "./prepareDandiUploadTask";
-import { useWorkspace } from "../../WorkspacePage/WorkspacePageContext";
-import { ProtocaasProcessingJobDefinition, createJob } from "../../../dbInterface/dbInterface";
-import { useProject } from "../ProjectPageContext";
 import { useGithubAuth } from "../../../GithubAuth/useGithubAuth";
-import { ProtocaasJob } from "../../../types/protocaas-types";
+import { ProtocaasProcessingJobDefinition, createJob } from "../../../dbInterface/dbInterface";
+import { useWorkspace } from "../../WorkspacePage/WorkspacePageContext";
+import { useProject } from "../ProjectPageContext";
+import { DandiUploadTask } from "./prepareDandiUploadTask";
+import { ProtocaasFile, ProtocaasJob } from "../../../types/protocaas-types";
 
 type DandiUploadWindowProps = {
     dandiUploadTask: DandiUploadTask
@@ -13,7 +13,7 @@ type DandiUploadWindowProps = {
 
 const DandiUploadWindow: FunctionComponent<DandiUploadWindowProps> = ({ dandiUploadTask, onClose }) => {
     const {computeResource} = useWorkspace()
-    const {projectId, workspaceId, files} = useProject()
+    const {projectId, workspaceId, files, jobs} = useProject()
     const processor = useMemo(() => {
         if (!computeResource) return undefined
         for (const app of computeResource.spec?.apps || []) {
@@ -41,6 +41,16 @@ const DandiUploadWindow: FunctionComponent<DandiUploadWindowProps> = ({ dandiUpl
     const handleUpload = useCallback(async () => {
         if (!processor) return
         if (!files) return
+        if (!jobs) return
+        const wasGeneratedByList: any[] = []
+        for (const fileName of dandiUploadTask.fileNames) {
+            const file = files.find(f => f.fileName === fileName)
+            if (!file) {
+                throw new Error(`Unexpected: file not found in project: ${fileName}`)
+            }
+            const job = file.jobId ? jobs.find(j => j.jobId === file.jobId) : undefined
+            wasGeneratedByList.push(createWasGeneratedByForFile(file, job, files))
+        }
         const jobDef: ProtocaasProcessingJobDefinition = {
             processorName: processor.name,
             inputFiles: dandiUploadTask.fileNames.map((fileName, ii) => ({
@@ -53,10 +63,6 @@ const DandiUploadWindow: FunctionComponent<DandiUploadWindowProps> = ({ dandiUpl
                     value: dandiUploadTask.dandisetId
                 },
                 {
-                    name: 'dandiset_version',
-                    value: 'draft'
-                },
-                {
                     name: 'dandi_instance',
                     value: dandiUploadTask.dandiInstance
                 },
@@ -67,6 +73,10 @@ const DandiUploadWindow: FunctionComponent<DandiUploadWindowProps> = ({ dandiUpl
                 {
                     name: 'names',
                     value: dandiUploadTask.names
+                },
+                {
+                    name: 'was_generated_by_jsons',
+                    value: wasGeneratedByList.map(x => JSON.stringify(x))
                 }
             ],
             outputFiles: []
@@ -82,7 +92,7 @@ const DandiUploadWindow: FunctionComponent<DandiUploadWindowProps> = ({ dandiUpl
         console.log('CREATING JOB', job)
         await createJob(job, auth)
         onClose()
-    }, [processor, dandiUploadTask, workspaceId, projectId, files, auth, dandiApiKey, onClose])
+    }, [processor, dandiUploadTask, workspaceId, projectId, files, auth, dandiApiKey, onClose, jobs])
     return (
         <div style={{padding: 30}}>
             <h3>DANDI Upload</h3>
@@ -132,6 +142,33 @@ const DandiUploadWindow: FunctionComponent<DandiUploadWindowProps> = ({ dandiUpl
             </div>
         </div>
     )
+}
+
+const createWasGeneratedByForFile = (file: ProtocaasFile, job: ProtocaasJob | undefined, files: ProtocaasFile[]) => {
+    return {
+        name: "protocaas",
+        workspaceId: file.workspaceId,
+        projectId: file.projectId,
+        jobId: job?.jobId,
+        processorName: job?.processorName,
+        processorVersion: job?.processorVersion,
+        job: job ? {
+            inputParameters: job?.inputParameters.map(p => {
+                return {name: p.name, value: p.value} // don't include the "secret" boolean here
+            }),
+            inputFiles: job?.inputFiles.map(f => {
+                const f2 = files.find(f2 => f2.fileName === f.fileName)
+                const metadata = f2?.metadata
+                return {name: f.name, fileName: f.fileName, metadata}
+            }),
+            outputFiles: job?.outputFiles.map(f => {
+                return {name: f.name, fileName: f.fileName}
+            }),
+            timestampCreated: job.timestampCreated,
+            timestampFinished: job.timestampFinished,
+            computeResourceId: job.computeResourceId,
+        } : undefined
+    }
 }
 
 export default DandiUploadWindow
