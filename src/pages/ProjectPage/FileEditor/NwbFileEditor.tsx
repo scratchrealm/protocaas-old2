@@ -227,7 +227,7 @@ const NwbFileEditorChild: FunctionComponent<Props> = ({fileName, width, height})
     )
 }
 
-const getAuthorizationHeaderForUrl = (url?: string) => {
+export const getAuthorizationHeaderForUrl = (url?: string) => {
     if (!url) return ''
     let key = ''
     if (url.startsWith('https://api-staging.dandiarchive.org/')) {

@@ -1,3 +1,4 @@
+import { getAuthorizationHeaderForUrl } from "../pages/ProjectPage/FileEditor/NwbFileEditor";
 import { ComputeResourceAwsBatchOpts, ComputeResourceSlurmOpts, ComputeResourceSpecProcessor, ProtocaasComputeResource, ProtocaasFile, ProtocaasJob, ProtocaasProject, ProtocaasWorkspace } from "../types/protocaas-types";
 
 type Auth = {
@@ -150,7 +151,7 @@ export const fetchFile = async (projectId: string, fileName: string, auth: Auth)
     return response.file
 }
 
-export const headRequest = async (url: string) => {
+const headRequest = async (url: string, headers?: any) => {
     // Cannot use HEAD, because it is not allowed by CORS on DANDI AWS bucket
     // let headResponse
     // try {
@@ -168,15 +169,28 @@ export const headRequest = async (url: string) => {
     // Instead, use aborted GET.
     const controller = new AbortController();
     const signal = controller.signal;
-    const response = await fetch(url, { signal })
+    const response = await fetch(url, {
+        signal,
+        headers
+    })
     controller.abort();
     return response
 }
 
 const getSizeForRemoteFile = async (url: string): Promise<number> => {
-    const response = await headRequest(url)
+    const authorizationHeader = getAuthorizationHeaderForUrl(url)
+    const headers = authorizationHeader ? {Authorization: authorizationHeader} : undefined
+    const response = await headRequest(url, headers)
     if (!response) {
         throw Error(`Unable to HEAD ${url}`)
+    }
+    if ((response.redirected === true) && (response.status !== 200)) {
+        // this is tricky -- there is a CORS problem which prevents the content-length from being on the redirected response
+        if (url === response.url) {
+            // to be safe, let's make sure we are not in an infinite loop
+            throw Error(`Unable to HEAD ${url} -- infinite redirect`)
+        }
+        return await getSizeForRemoteFile(response.url)
     }
     const size = Number(response.headers.get('content-length'))
     if (isNaN(size)) {
