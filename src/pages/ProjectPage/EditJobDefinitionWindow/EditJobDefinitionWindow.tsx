@@ -311,18 +311,8 @@ const EditParameterValue: FunctionComponent<EditParameterValueProps> = ({paramet
         setValid(true)
         return <input type="checkbox" checked={value || false} onChange={evt => {setValue(evt.target.checked ? true : false)}} />
     }
-    else if (type === 'Enum') {
-        return <div>Enum not implemented yet</div>
-        // const choices = parameter.choices || []
-        // return (
-        //     <select value={value} onChange={evt => {setValue(evt.target.value)}}>
-        //         {
-        //             choices.map(choice => (
-        //                 <option key={choice} value={choice}>{choice}</option>
-        //             ))
-        //         }
-        //     </select>
-        // )
+    else if (type === 'List[float]') {
+        return <FloatListEdit value={value} setValue={setValue} setValid={setValid} />
     }
     else {
         return <div>Unsupported type: {type}</div>
@@ -469,6 +459,70 @@ const ElectricalSeriesPathSelector: FunctionComponent<ElectricalSeriesPathSelect
                 ))
             }
         </select>
+    )
+}
+
+type FloatListEditProps = {
+    value: any
+    setValue: (value: any) => void
+    setValid: (valid: boolean) => void
+}
+
+const isFloatListType = (x: any) => {
+    if (!Array.isArray(x)) return false
+    for (let i=0; i<x.length; i++) {
+        if (!isFloatType(x[i])) return false
+    }
+    return true
+}
+
+function floatListToString(x: number[]) {
+    return x.join(', ')
+}
+
+function stringToFloatList(s: string) {
+    return s.split(',').map(x => parseFloat(x.trim()))
+}
+
+function stringIsValidFloatList(s: string) {
+    const floatListRegex = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?(,\s*[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)*$/;
+    return floatListRegex.test(s);
+}
+
+const FloatListEdit: FunctionComponent<FloatListEditProps> = ({value, setValue, setValid}) => {
+    const [internalValue, setInternalValue] = useState<string | undefined>(undefined)
+    useEffect(() => {
+        if (isFloatListType(value)) {
+            setInternalValue(old => {
+                if ((old !== undefined) && (stringIsValidFloatList(old)) && (floatListToString(value) === old)) return old
+                return floatListToString(value)
+            })
+        }
+    }, [value])
+
+    useEffect(() => {
+        if (internalValue === undefined) return
+        if (stringIsValidFloatList(internalValue)) {
+            setValue(stringToFloatList(internalValue))
+            setValid(true)
+        }
+        else {
+            setValid(false)
+        }
+    }, [internalValue, setValue, setValid])
+
+    const isValid = useMemo(() => {
+        if (internalValue === undefined) return false
+        return stringIsValidFloatList(internalValue)
+    }, [internalValue])
+
+    return (
+        <span>
+            <input type="text" value={internalValue || ''} onChange={evt => {setInternalValue(evt.target.value)}} />
+            {
+                isValid ? null : <span style={{color: 'red'}}>x</span>
+            }
+        </span>
     )
 }
 
