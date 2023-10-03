@@ -88,7 +88,7 @@ const RunBatchSpikeSortingWindow: FunctionComponent<Props> = ({ filePaths, onClo
 
     const [valid, setValid] = useState(false)
 
-    const [overwriteExistingOutputs, setOverwriteExistingOutputs] = useState(false)
+    const [overwriteExistingOutputs, setOverwriteExistingOutputs] = useState(true)
     const [descriptionString, setDescriptionString] = useState('')
     useEffect(() => {
         if (!processor) return
@@ -168,7 +168,7 @@ const RunBatchSpikeSortingWindow: FunctionComponent<Props> = ({ filePaths, onClo
                         <tr>
                             <td>Description string in output file name</td>
                             <td>
-                                <input type="text" value={descriptionString} onChange={evt => setDescriptionString(evt.target.value)} /> {`/*`}
+                                <input type="text" value={descriptionString} onChange={evt => setDescriptionString(evt.target.value)} /> {`*_desc-${descriptionString}.nwb`}
                                 {
                                     !descriptionStringIsValid && (
                                         <span style={{color: 'red'}}>Invalid description string</span>
