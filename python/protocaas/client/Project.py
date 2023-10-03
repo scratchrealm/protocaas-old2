@@ -80,7 +80,7 @@ class ProjectJob:
 def load_project(project_id: str) -> Project:
     url_path = f'/api/client/projects/{project_id}'
     project_resp = _client_get_api_request(url_path=url_path)
-    project: ProtocaasProject = project_resp['project']
+    project: ProtocaasProject = ProtocaasProject(**project_resp['project'])
 
     url_path = f'/api/client/projects/{project_id}/files'
     files_resp = _client_get_api_request(url_path=url_path)
