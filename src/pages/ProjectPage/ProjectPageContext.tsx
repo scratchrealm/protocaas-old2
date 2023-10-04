@@ -251,11 +251,43 @@ export const SetupProjectPage: FunctionComponent<PropsWithChildren<Props>> = ({c
         return tab.editedContent !== tab.content
     }), [openTabs])
 
+    const pendingFiles = useMemo(() => {
+        const fileNames = new Set(files?.map(f => f.fileName) ?? [])
+        const pf: ProtocaasFile[] = []
+        for (const job of jobs ?? []) {
+            if (['pending', 'starting', 'queued', 'running'].includes(job.status)) {
+                for (const out of job.outputFiles) {
+                    if (!fileNames.has(out.fileName)) {
+                        pf.push({
+                            projectId: job.projectId,
+                            workspaceId: job.workspaceId,
+                            fileId: '',
+                            userId: job.userId,
+                            fileName: out.fileName,
+                            size: 0,
+                            timestampCreated: 0,
+                            content: 'pending:' + job.status,
+                            metadata: {},
+                            jobId: job.jobId
+                        })
+                        fileNames.add(out.fileName)
+                    }
+                }
+            }
+        }
+        return pf
+    }, [files, jobs])
+
+    const filesIncludingPending = useMemo(() => {
+        return [...(files ?? []), ...pendingFiles]
+    }, [files, pendingFiles])
+
     const value: ProjectPageContextType = React.useMemo(() => ({
         projectId,
         workspaceId: project?.workspaceId ?? '',
         project,
         files,
+        filesIncludingPending,
         openTabs: openTabs.openTabs,
         currentTabName: openTabs.currentTabName,
         jobs,
@@ -272,7 +304,7 @@ export const SetupProjectPage: FunctionComponent<PropsWithChildren<Props>> = ({c
         deleteJob: deleteJobHandler,
         deleteFile: deleteFileHandler,
         fileHasBeenEdited
-    }), [project, files, projectId, refreshFiles, openTabs, deleteProjectHandler, setProjectNameHandler, refreshJobs, jobs, deleteJobHandler, deleteFileHandler, fileHasBeenEdited])
+    }), [project, files, filesIncludingPending, projectId, refreshFiles, openTabs, deleteProjectHandler, setProjectNameHandler, refreshJobs, jobs, deleteJobHandler, deleteFileHandler, fileHasBeenEdited])
 
     return (
         <ProjectPageContext.Provider value={value}>

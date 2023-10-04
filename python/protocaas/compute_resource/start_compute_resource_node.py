@@ -359,7 +359,8 @@ class SlurmJobHandler:
             if slurm_time is not None:
                 oo.append(f'--time={slurm_time}')
             if slurm_other_opts is not None:
-                oo.append(slurm_other_opts.split(' '))
+                for opt in slurm_other_opts.split(' '):
+                    oo.append(opt)
             slurm_opts_str = ' '.join(oo)
             cmd = f'srun -n {len(jobs)} {slurm_opts_str} bash {slurm_script_fname}'
             print(f'Running slurm batch: {cmd}')
