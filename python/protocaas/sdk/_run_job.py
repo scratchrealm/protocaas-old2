@@ -50,6 +50,7 @@ def _run_job(*, job_id: str, job_private_key: str, app_executable: str):
     console_output_changed = False
     last_check_job_exists_time = time.time()
 
+    num_status_check_failures = 0
     succeeded = False
     try:
         while True:
@@ -89,9 +90,17 @@ def _run_job(*, job_id: str, job_private_key: str, app_executable: str):
                 break
 
             elapsed = time.time() - last_check_job_exists_time
-            if elapsed > 30:
+            if elapsed > 120:
                 last_check_job_exists_time = time.time()
-                job_status = _get_job_status(job_id=job_id, job_private_key=job_private_key)
+                try:
+                    job_status = _get_job_status(job_id=job_id, job_private_key=job_private_key)
+                    num_status_check_failures = 0
+                except:
+                    print('Failed to check job status')
+                    num_status_check_failures += 1
+                    if num_status_check_failures >= 3:
+                        print('Failed to check job status 3 times in a row. Assuming job was canceled.')
+                        raise
                 if job_status is None:
                     raise ValueError('Job does not exist (was probably canceled)')
                 if job_status != 'running':
