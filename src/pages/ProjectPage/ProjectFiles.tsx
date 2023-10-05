@@ -16,7 +16,7 @@ type ProjectFilesProps = {
 }
 
 const ProjectFiles: FunctionComponent<ProjectFilesProps> = ({width, height, onRunBatchSpikeSorting, onDandiUpload}) => {
-    const {files, openTab, deleteFile, closeTab, openTabs, refreshFiles} = useProject()
+    const {filesIncludingPending, openTab, deleteFile, closeTab, openTabs, refreshFiles} = useProject()
 
     const handleOpenFile = useCallback((fileName: string) => {
         openTab(`file:${fileName}`)
@@ -29,7 +29,7 @@ const ProjectFiles: FunctionComponent<ProjectFilesProps> = ({width, height, onRu
         closeTab(`file:${fileName}`)
     }, [deleteFile, closeTab, refreshFiles])
 
-    if (!files) return <div>Loading project files...</div>
+    if (!filesIncludingPending) return <div>Loading project files...</div>
 
     return (
         <Splitter
@@ -42,7 +42,7 @@ const ProjectFiles: FunctionComponent<ProjectFilesProps> = ({width, height, onRu
             <FileBrowser2
                 width={0}
                 height={0}
-                files={files}
+                files={filesIncludingPending}
                 onOpenFile={handleOpenFile}
                 onDeleteFile={handleDeleteFile}
                 hideSizeColumn={false}

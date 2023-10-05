@@ -109,6 +109,7 @@ type ProjectPageContextType = {
     workspaceId: string
     project?: ProtocaasProject
     files?: ProtocaasFile[]
+    filesIncludingPending?: ProtocaasFile[]
     openTabs: {
         tabName: string
         content?: string
@@ -252,9 +253,11 @@ export const SetupProjectPage: FunctionComponent<PropsWithChildren<Props>> = ({c
     }), [openTabs])
 
     const pendingFiles = useMemo(() => {
-        const fileNames = new Set(files?.map(f => f.fileName) ?? [])
+        if (!jobs) return undefined
+        if (!files) return undefined
+        const fileNames = new Set(files.map(f => f.fileName))
         const pf: ProtocaasFile[] = []
-        for (const job of jobs ?? []) {
+        for (const job of jobs) {
             if (['pending', 'starting', 'queued', 'running'].includes(job.status)) {
                 for (const out of job.outputFiles) {
                     if (!fileNames.has(out.fileName)) {
@@ -279,7 +282,7 @@ export const SetupProjectPage: FunctionComponent<PropsWithChildren<Props>> = ({c
     }, [files, jobs])
 
     const filesIncludingPending = useMemo(() => {
-        return [...(files ?? []), ...pendingFiles]
+        return files && pendingFiles ? [...files, ...pendingFiles] : undefined
     }, [files, pendingFiles])
 
     const value: ProjectPageContextType = React.useMemo(() => ({

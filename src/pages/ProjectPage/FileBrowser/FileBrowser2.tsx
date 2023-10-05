@@ -29,6 +29,7 @@ type FileItem = {
     selected: boolean
     size: number
     timestampCreated: number
+    content?: string
 } | {
     type: 'folder'
     id: string
@@ -224,7 +225,8 @@ const FileBrowser2: FunctionComponent<Props> = ({width, height, onOpenFile, file
                     name: node.name,
                     selected: 'file:' + node.name === currentTabName,
                     size: node.file?.size || 0,
-                    timestampCreated: node.file?.timestampCreated || 0
+                    timestampCreated: node.file?.timestampCreated || 0,
+                    content: node.file?.content
                 })
             }
         }
@@ -316,7 +318,8 @@ const FileBrowser2: FunctionComponent<Props> = ({width, height, onOpenFile, file
                                             x.type === 'file' ? (
                                                 <Hyperlink
                                                     onClick={() => handleClickFile(x.name)}
-                                                >{depthIndentation(x.name)}{baseName(x.name)}</Hyperlink>
+                                                    color={x.content?.startsWith('pending:') ? 'gray' : undefined}
+                                                >{depthIndentation(x.name)}{baseName(x.name)}{x.content?.startsWith('pending:') ? ` (${x.content.slice('pending:'.length)})` : ""}</Hyperlink>
                                             ) : (
                                                 <span style={{cursor: 'pointer'}} onClick={() => expandedFoldersDispatch({type: 'toggle', path: x.name})}>
                                                     {depthIndentation(x.name)}

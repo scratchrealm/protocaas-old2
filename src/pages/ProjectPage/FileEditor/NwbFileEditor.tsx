@@ -104,8 +104,8 @@ const NwbFileEditorChild: FunctionComponent<Props> = ({fileName, width, height})
     const metadata = nbFile?.metadata
     const cc = nbFile?.content || ''
     const nwbUrl = cc.startsWith('url:') ? cc.slice('url:'.length) : ''
-    const nwbFile = useNwbFile(nwbUrl)
-    const electricalSeriesPaths = useElectricalSeriesPaths(nwbFile)
+    // const nwbFile = useNwbFile(nwbUrl)
+    // const electricalSeriesPaths = useElectricalSeriesPaths(nwbFile)
 
     const dandisetId = metadata?.dandisetId || ''
     const dandisetVersion = metadata?.dandisetVersion || ''
@@ -164,25 +164,36 @@ const NwbFileEditorChild: FunctionComponent<Props> = ({fileName, width, height})
             <table className="table1">
                 <tbody>
                     <tr>
+                        <td>Path:</td>
+                        <td>{fileName}</td>
+                    </tr>
+                    <tr>
                         <td>URL:</td>
                         <td>{nwbUrl}</td>
                     </tr>
+                    {
+                        dandisetId && (
+                            <tr>
+                                <td>Dandiset:</td>
+                                <td>
+                                    {dandisetId && <a href={`https://${stagingStr2}dandiarchive.org/dandiset/${dandisetId}/${dandisetVersion}`} target="_blank" rel="noreferrer">
+                                        {dandisetId} ({dandisetVersion || ''})
+                                    </a>}
+                                </td>
+                            </tr>
+                        )
+                    }
+                    {
+                        assetResponse?.path && (
+                            <tr>
+                                <td>DANDI Path:</td>
+                                <td>
+                                    {assetResponse?.path || ''}
+                                </td>
+                            </tr>
+                        )
+                    }
                     <tr>
-                        <td>Dandiset:</td>
-                        <td>
-                            {dandisetId && <a href={`https://${stagingStr2}dandiarchive.org/dandiset/${dandisetId}/${dandisetVersion}`} target="_blank" rel="noreferrer">
-                                {dandisetId} ({dandisetVersion || ''})
-                            </a>}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>DANDI Path:</td>
-                        <td>
-                            {assetResponse?.path || ''}
-                        </td>
-                    </tr>
-                    <tr>
-
                     </tr>
                 </tbody>
             </table>
