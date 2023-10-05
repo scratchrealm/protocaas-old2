@@ -1,12 +1,9 @@
 import { FunctionComponent, useCallback, useEffect, useMemo, useState } from "react";
 import { useModalDialog } from "../../../ApplicationBar";
-import { useGithubAuth } from "../../../GithubAuth/useGithubAuth";
 import { RemoteH5File, getRemoteH5File } from "../../../RemoteH5File/RemoteH5File";
 import Hyperlink from "../../../components/Hyperlink";
 import ModalWindow from "../../../components/ModalWindow/ModalWindow";
 import Splitter from "../../../components/Splitter";
-import { fetchFile } from "../../../dbInterface/dbInterface";
-import { ProtocaasFile } from "../../../types/protocaas-types";
 import { getDandiApiHeaders } from "../DandiImport/DandiNwbSelector";
 import { AssetResponse } from "../DandiImport/types";
 import JobsWindow from "../JobsWindow/JobsWindow";
@@ -85,21 +82,12 @@ export const useElectricalSeriesPaths = (nwbFile: RemoteH5File | undefined) => {
 const NwbFileEditorChild: FunctionComponent<Props> = ({fileName, width, height}) => {
     const [assetResponse, setAssetResponse] = useState<AssetResponse | null>(null)
 
-    const {projectId, project, jobs} = useProject()
+    const {project, jobs, filesIncludingPending, openTab} = useProject()
 
-    const {accessToken, userId} = useGithubAuth()
-    const auth = useMemo(() => (accessToken ? {githubAccessToken: accessToken, userId} : {}), [accessToken, userId])
-
-    const [nbFile, setProtocaasFile] = useState<ProtocaasFile | undefined>(undefined)
-    useEffect(() => {
-        let canceled = false
-        ; (async () => {
-            const f = await fetchFile(projectId, fileName, auth)
-            if (canceled) return
-            setProtocaasFile(f)
-        })()
-        return () => {canceled = true}
-    }, [projectId, fileName, auth])
+    const nbFile = useMemo(() => {
+        if (!filesIncludingPending) return undefined
+        return filesIncludingPending.find(f => (f.fileName === fileName))
+    }, [filesIncludingPending, fileName])
 
     const metadata = nbFile?.metadata
     const cc = nbFile?.content || ''
@@ -158,6 +146,15 @@ const NwbFileEditorChild: FunctionComponent<Props> = ({fileName, width, height})
         return undefined
     }, [jobs, nbFile])
 
+    const jobProducingThisFile = useMemo(() => {
+        if (!jobs) return undefined
+        if (!nbFile) return undefined
+        if (!nbFile.jobId) return undefined
+        const job = jobs.find(j => (j.jobId === nbFile.jobId))
+        if (!job) return
+        return job
+    }, [jobs, nbFile])
+
     return (
         <div style={{position: 'absolute', width, height, background: 'white'}}>
             <hr />
@@ -171,6 +168,24 @@ const NwbFileEditorChild: FunctionComponent<Props> = ({fileName, width, height})
                         <td>URL:</td>
                         <td>{nwbUrl}</td>
                     </tr>
+                    {
+                        jobProducingThisFile && (
+                            <>
+                                <tr>
+                                    <td>Job status:</td>
+                                    <td>
+                                        <Hyperlink onClick={() => {openTab(`job:${jobProducingThisFile.jobId}`)}}>
+                                            {jobProducingThisFile.status}
+                                        </Hyperlink>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Elapsed time (sec):</td>
+                                    <td>{(jobProducingThisFile.status === 'completed' || jobProducingThisFile.status === 'failed') ? (jobProducingThisFile.timestampFinished || 0) - (jobProducingThisFile.timestampStarted || 0) : ''}</td>
+                                </tr>
+                            </>
+                        )
+                    }
                     {
                         dandisetId && (
                             <tr>
