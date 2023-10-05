@@ -91,7 +91,7 @@ class Daemon:
         print('Starting compute resource')
         while True:
             elapsed_handle_jobs = time.time() - timer_handle_jobs
-            need_to_handle_jobs = elapsed_handle_jobs > 60
+            need_to_handle_jobs = elapsed_handle_jobs > 60 * 10 # normally we will get pubsub messages for updates, but if we don't, we should check every 10 minutes
             messages = self._pubsub_client.take_messages()
             for msg in messages:
                 if msg['type'] == 'newPendingJob':
@@ -105,7 +105,7 @@ class Daemon:
             for slurm_job_handler in self._slurm_job_handlers_by_processor.values():
                 slurm_job_handler.do_work()
 
-            time.sleep(1)
+            time.sleep(2)
     def _handle_jobs(self):
         url_path = f'/api/compute_resource/compute_resources/{self._compute_resource_id}/unfinished_jobs'
         resp = _compute_resource_get_api_request(
