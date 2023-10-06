@@ -27,7 +27,7 @@ setup(
         'simplejson',
         'numpy',
         'PyYAML',
-        'remfile',
+        'remfile>=0.1.8',
         'pubnub>=7.2.0',
         'pydantic'
     ],

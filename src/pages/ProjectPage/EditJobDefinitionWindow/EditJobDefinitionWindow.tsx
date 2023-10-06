@@ -254,7 +254,10 @@ const ParameterRow: FunctionComponent<ParameterRowProps> = ({parameter, value, n
                 {
                     readOnly ? (
                         <span>
-                            {value}
+                            <DisplayParameterValue
+                                parameter={parameter}
+                                value={value}
+                            />
                             {
                                 // we don't want to rely on the display to hide the secret
                                 // if it is a secret the value should be empty
@@ -524,6 +527,33 @@ const FloatListEdit: FunctionComponent<FloatListEditProps> = ({value, setValue, 
             }
         </span>
     )
+}
+
+type DisplayParameterValueProps = {
+    parameter: ComputeResourceSpecProcessorParameter
+    value: any
+}
+
+const DisplayParameterValue: FunctionComponent<DisplayParameterValueProps> = ({parameter, value}) => {
+    const {type} = parameter
+    if (type === 'str') {
+        return <span>{value}</span>
+    }
+    else if (type === 'int') {
+        return <span>{value}</span>
+    }
+    else if (type === 'float') {
+        return <span>{value}</span>
+    }
+    else if (type === 'bool') {
+        return <span>{value ? 'true' : 'false'}</span>
+    }
+    else if (type === 'List[float]') {
+        return <span>{value.join(', ')}</span>
+    }
+    else {
+        return <div>Unsupported type: {type}</div>
+    }
 }
 
 export default EditJobDefinitionWindow
