@@ -10,6 +10,7 @@ import JobsWindow from "../JobsWindow/JobsWindow";
 import LoadNwbInPythonWindow from "../LoadNwbInPythonWindow/LoadNwbInPythonWindow";
 import { useProject } from "../ProjectPageContext";
 import SpikeSortingOutputSection from "./SpikeSortingOutputSection/SpikeSortingOutputSection";
+import { ProtocaasJob } from "../../../types/protocaas-types";
 
 
 type Props = {
@@ -181,7 +182,7 @@ const NwbFileEditorChild: FunctionComponent<Props> = ({fileName, width, height})
                                 </tr>
                                 <tr>
                                     <td>Elapsed time (sec):</td>
-                                    <td>{(jobProducingThisFile.status === 'completed' || jobProducingThisFile.status === 'failed') ? (jobProducingThisFile.timestampFinished || 0) - (jobProducingThisFile.timestampStarted || 0) : ''}</td>
+                                    <td><ElapsedTimeComponent job={jobProducingThisFile} /></td>
                                 </tr>
                             </>
                         )
@@ -325,6 +326,45 @@ const isDandiAssetUrl = (url: string) => {
     }
     if (url.startsWith('https://api.dandiarchive.org/api/')) {
       return true
+    }
+}
+
+type ElapsedTimeComponentProps = {
+    job: ProtocaasJob
+}
+
+export const ElapsedTimeComponent: FunctionComponent<ElapsedTimeComponentProps> = ({job}) => {
+
+    // if job.status is 'running', then we want to refresh ever 30 seconds
+    const [refreshCode, setRefreshCode] = useState(0)
+    const refreshInterval = 30000
+    useEffect(() => {
+        let canceled = false
+        if (['running'].includes(job.status)) {
+            const timer = setInterval(() => {
+                if (canceled) return
+                setRefreshCode(rc => rc + 1)
+            }, refreshInterval)
+            return () => {
+                canceled = true
+                clearInterval(timer)
+            }
+        }
+    }, [job.status])
+
+    const truncateToThreeDigits = (x: number) => {
+        return Math.floor(x * 1000) / 1000
+    }
+    if (['completed', 'failed'].includes(job.status)) {
+        const elapsed = (job.timestampFinished || 0) - (job.timestampStarted || 0)
+        return <span>{truncateToThreeDigits(elapsed)}</span>
+    }
+    else if (['running'].includes(job.status)) {
+        const elapsed = (Date.now() / 1000) - (job.timestampStarted || 0)
+        return <span>{Math.floor(elapsed)}</span>
+    }
+    else {
+        return <span></span>
     }
 }
 

@@ -5,6 +5,7 @@ import { useGithubAuth } from "../../../GithubAuth/useGithubAuth";
 import { ProtocaasJob } from "../../../types/protocaas-types";
 import UserIdComponent from "../../../UserIdComponent";
 import EditJobDefinitionWindow from "../EditJobDefinitionWindow/EditJobDefinitionWindow";
+import { ElapsedTimeComponent } from "../FileEditor/NwbFileEditor";
 
 type Props = {
     width: number,
@@ -106,7 +107,7 @@ const JobView: FunctionComponent<Props> = ({ width, height, jobId }) => {
                     </tr>
                     <tr>
                         <td>Elapsed time (sec):</td>
-                        <td>{(job.status === 'completed' || job.status === 'failed') ? (job.timestampFinished || 0) - (job.timestampStarted || 0) : ''}</td>
+                        <td><ElapsedTimeComponent job={job} /></td>
                     </tr>
                 </tbody>
             </table>
