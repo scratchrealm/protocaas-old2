@@ -8,27 +8,12 @@ from dataclasses import dataclass
 from .InputFile import InputFile
 from .OutputFile import OutputFile
 from .AppProcessor import AppProcessor
+from .Job import Job
 from ._run_job import _run_job
 from ..common.protocaas_types import ComputeResourceSlurmOpts
 from ..common.protocaas_types import ProcessorGetJobResponse
 from ..common._api_request import _processor_get_api_request
 
-
-@dataclass
-class JobParameter:
-    """A parameter passed to a job"""
-    name: str
-    value: Any
-
-@dataclass
-class Job:
-    """A job that is passed to a processor"""
-    job_id: str
-    status: str
-    processor_name: str
-    inputs: List[InputFile]
-    outputs: List[OutputFile]
-    parameters: List[JobParameter]
 
 class App:
     """An app"""
@@ -205,20 +190,8 @@ class TemporaryDirectory:
 
 def _get_job(*, job_id: str, job_private_key: str) -> str:
     """Get a job from the protocaas API"""
-    url_path = f'/api/processor/jobs/{job_id}'
-    headers = {
-        'job-private-key': job_private_key
-    }
-    resp_dict = _processor_get_api_request(
-        url_path=url_path,
-        headers=headers
-    )
-    resp = ProcessorGetJobResponse(**resp_dict)
-    return Job(
+    job = Job(
         job_id=job_id,
-        status=resp.status,
-        processor_name=resp.processorName,
-        inputs=[InputFile(name=i.name, url=i.url) for i in resp.inputs],
-        outputs=[OutputFile(name=o.name, job_id=job_id, job_private_key=job_private_key) for o in resp.outputs],
-        parameters=[JobParameter(name=p.name, value=p.value) for p in resp.parameters]
+        job_private_key=job_private_key
     )
+    return job

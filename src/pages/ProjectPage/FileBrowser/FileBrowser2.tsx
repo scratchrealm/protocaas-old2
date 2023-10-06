@@ -318,7 +318,7 @@ const FileBrowser2: FunctionComponent<Props> = ({width, height, onOpenFile, file
                                             x.type === 'file' ? (
                                                 <Hyperlink
                                                     onClick={() => handleClickFile(x.name)}
-                                                    color={x.content?.startsWith('pending:') ? 'gray' : undefined}
+                                                    color={x.content?.startsWith('pending:') ? x.content === 'pending:failed' ? 'red' : 'gray' : undefined}
                                                 >{depthIndentation(x.name)}{baseName(x.name)}{x.content?.startsWith('pending:') ? ` (${x.content.slice('pending:'.length)})` : ""}</Hyperlink>
                                             ) : (
                                                 <span style={{cursor: 'pointer'}} onClick={() => expandedFoldersDispatch({type: 'toggle', path: x.name})}>

@@ -258,7 +258,7 @@ export const SetupProjectPage: FunctionComponent<PropsWithChildren<Props>> = ({c
         const fileNames = new Set(files.map(f => f.fileName))
         const pf: ProtocaasFile[] = []
         for (const job of jobs) {
-            if (['pending', 'starting', 'queued', 'running'].includes(job.status)) {
+            if (['pending', 'starting', 'queued', 'running', 'failed'].includes(job.status)) {
                 for (const out of job.outputFiles) {
                     if (!fileNames.has(out.fileName)) {
                         pf.push({

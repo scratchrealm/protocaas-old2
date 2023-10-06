@@ -1,14 +1,16 @@
 import requests
-
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .Job import Job
 
 class InputFile:
-    def __init__(self, *, name: str, url: str) -> None:
+    def __init__(self, *, name: str, job: 'Job') -> None:
         self._name = name
-        self._url = url
+        self._job = job
     def get_url(self) -> str:
-        return self._url
+        return self._job._get_download_url_for_input_file(name=self._name)
     def download(self, dest_file_path: str):
-        url = self._url
+        url = self.get_url()
         print(f'Downloading {url} to {dest_file_path}')
         # stream the download
         r = requests.get(url, stream=True)

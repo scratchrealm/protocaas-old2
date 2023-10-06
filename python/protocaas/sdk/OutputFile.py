@@ -1,23 +1,17 @@
+from typing import TYPE_CHECKING
 import requests
-from ..common._api_request import _processor_get_api_request
+
+if TYPE_CHECKING:
+    from .Job import Job
 
 
 class OutputFile:
-    def __init__(self, *, name: str, job_id: str, job_private_key: str) -> None:
+    def __init__(self, *, name: str, job: 'Job') -> None:
         self._name = name
-        self._job_id = job_id
-        self._job_private_key = job_private_key
+        self._job = job
         self._was_set = False
     def set(self, local_file_path: str):
-        url_path = f'/api/processor/jobs/{self._job_id}/outputs/{self._name}/upload_url'
-        headers = {
-            'job-private-key': self._job_private_key
-        }
-        resp = _processor_get_api_request(
-            url_path=url_path,
-            headers=headers
-        )
-        upload_url = resp['uploadUrl'] # This will be a presigned AWS S3 URL
+        upload_url = self._job._get_upload_url_for_output_file(name=self._name)
 
         # Upload the file to the URL
         with open(local_file_path, 'rb') as f:
