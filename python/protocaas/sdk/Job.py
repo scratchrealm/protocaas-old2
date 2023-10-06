@@ -21,12 +21,13 @@ class Job:
     ) -> None:
         self._job_id = job_id
         self._job_private_key = job_private_key
-        self._inputs: List[InputFile] = []
-        self._outputs: List[OutputFile] = []
-        self._parameters: List[JobParameter] = []
         self._api_request_job_response: ProcessorGetJobResponse = None
         self._api_request_job_timestamp = 0
         self._api_request_job_if_needed()
+        # important to set these only once here because these objects will be passed into the processor function
+        self._inputs = [InputFile(name=i.name, job=self) for i in self._api_request_job_response.inputs]
+        self._outputs = [OutputFile(name=o.name, job=self) for o in self._api_request_job_response.outputs]
+        self._parameters = [JobParameter(name=p.name, value=p.value) for p in self._api_request_job_response.parameters]
     def add_input_file(self, name: str):
         """Add an input file to the job"""
         input_file = InputFile(name=name, job=self)
@@ -102,8 +103,5 @@ class Job:
             headers=headers
         )
         resp = ProcessorGetJobResponse(**resp_dict)
-        self._inputs = [InputFile(name=i.name, job=self) for i in resp.inputs]
-        self._outputs = [OutputFile(name=o.name, job=self) for o in resp.outputs]
-        self._parameters = [JobParameter(name=p.name, value=p.value) for p in resp.parameters]
         self._api_request_job_response = resp
         self._api_request_job_timestamp = time.time()
