@@ -133,8 +133,8 @@ const JobView: FunctionComponent<Props> = ({ width, height, jobId }) => {
                 />
             </ExpandableSection>
             <hr />
-            <ExpandableSection title="Console output">
-                <pre>
+            <ExpandableSection title="Console output" defaultExpanded={true}>
+                <pre style={{fontSize: 10}}>
                     {job.consoleOutput}
                 </pre>
             </ExpandableSection>
