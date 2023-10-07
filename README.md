@@ -1,8 +1,10 @@
 # Protocaas - Neuroscience Analysis Web App
 
-Protocaas is a prototype web application designed for scientists in research labs who want to efficiently manage and conduct neurophysiology data analysis. Whether you are working with your own data or utilizing resources from the [DANDI Archive](https://dandiarchive.org/), Protocaas provides a user-friendly platform for organizing, running, and sharing neuroscientific processing jobs.
+Protocaas is a prototype web application designed for scientists in research labs who want to efficiently manage and conduct neurophysiology data analysis. Whether you are working with your own data or utilizing public resources from the [DANDI Archive](https://dandiarchive.org/), Protocaas provides a user-friendly platform for organizing, running, and sharing neuroscientific processing jobs.
 
 :warning: **Please note:** This software is currently in the prototype phase and is not recommended for production use.
+
+If you're a lab working with electrophysiology data and looking for a solution to spike sort your data, consider trying this software as a beta tester. You can use it in the cloud or with your local resources. Reach out to one of the authors if interested.
 
 * [Access the live site](https://protocaas.vercel.app)
 * [Learn how to host a compute resource](./doc/host_compute_resource.md)
@@ -13,16 +15,23 @@ To use Protocaas, you only need a web browser. No additional software installati
 
 If you want to [host your own compute resource](./doc/host_compute_resource.md) for processing, you will need a Linux machine with optional access to a Slurm cluster or AWS resources.
 
-## Workspaces and Projects
+## Workspaces, Projects, Files and Jobs
 
-Protocaas organizes datasets into workspaces and projects, streamlining your data management process. Each workspace is associated with an owner and can include optional collaborators. You can choose to make your workspaces public or private, and they can be listed or unlisted. Within your workspaces, you can create projects, which consist of files and processing jobs.
+Protocaas organizes datasets into workspaces, projects, files and jobs, streamlining your data management process. Each workspace is associated with an owner and a compute resource and can include optional collaborators. You can choose to make your workspace public or private, and it can be listed or unlisted. Within your workspace, you can create projects, which consist of files and processing jobs.
 
-In each project, files serve as either pointers to external data sources (e.g., DANDI assets) or as the output of specific processing jobs. These files are typically formatted in NWB (Neurodata Without Borders) format. To get started, you can use the DANDI import tool to seamlessly import data from DANDI repositories. Once imported, you can define processing jobs that take these raw data files as input and generate new project files as output. Project files are immutable, and each file is assigned a unique URL, size, and associated metadata.
+In each project, files serve as either pointers to external data sources (e.g., DANDI assets) or as the output of specific processing jobs. These files are typically formatted in NWB (Neurodata Without Borders) format. To get started, you can use the DANDI import tool to seamlessly import data from DANDI repositories. Once imported, you can define processing jobs, such as spike sorting, that take these raw data files as input and generate new project files as output. Project files are immutable.
+
+## Files and jobs are tightly linked
+
+The full provenance history of each file is stored within a Protocaas project. Each generated file is associated with a unique job that generated it, and each job has links to its input and output files. If a file is deleted, then all jobs that link to that job (either as an input or an output) are also deleted. Similarly, if a job is deleted, then the linked files are also deleted. Thus, in a pipeline, deleting a single file can have a cascading effect in deleting files and jobs throughout the project. In this way, Protocaas files always have a full provenance record.
+
+Files and jobs can also be automatically deleted if a new job is queued that would overwrite existing files. Note that existing files (and jobs) are deleted when the new job is *queued* (not *run*).
 
 ## Processing Apps
 
-Protocaas processing tools are organized into plugin apps which are containerized executable programs. At this point, there are only [a couple processing apps available](https://github.com/scratchrealm/pc-spike-sorting):
+Protocaas processing tools are organized into plugin apps which are containerized executable programs. At this point, there are only [a few processing apps available](https://github.com/scratchrealm/pc-spike-sorting), including:
 
+- Spike sorting using Kilosort 2.5
 - Spike sorting using Kilosort 3
 - Spike sorting using MountainSort 5
 
@@ -32,8 +41,6 @@ As the project matures, we will add more apps to this list. Users can also contr
 
 Apache 2.0
 
-### Authors
+## Authors
 
-Jeremy Magland, Center for Computational Mathematics, Flatiron Institute
-
-Ben Dichter and Luiz Tauffer, CatalystNeuro
+Jeremy Magland (Flatiron Institute) in collaboration with Ben Dichter and Luiz Tauffer (Catalyst Neuro)
