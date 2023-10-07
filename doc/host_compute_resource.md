@@ -60,6 +60,8 @@ If you have access to a Slurm cluster, you can configure apps to use it. This is
 * Time: the maximum time to allow for a single job (impacts job scheduling) (e.g., `5:00:00` for 5 hours)
 * Other options: any other options to pass to the `srun` command (e.g., `--gpus=1`)
 
+Don't forget to restart your compute resource node after making changes to the web interface.
+
 ## Configuring apps to use AWS Batch
 
 To use AWS Batch, you will need to set up an AWS Batch compute environment and job queue. You will also need to set up an AWS Batch job definition for each app you want to use. The job definition should be configured to use the appropriate docker image for the app. If you are a beta tester, you can reach out to the authors for help configuring this.
@@ -70,6 +72,8 @@ You will need to provide the following fields when configuring the app in the we
 * Job definition: the name of the AWS Batch job definition to use
 
 You will also need to provide your AWS credentials in the `.protocaas-compute-resource-node.yaml` in the directory where yur compute resource node daemon is running.
+
+Don't forget to restart your compute resource node after making changes to the web interface.
 
 ## Configuring apps to use a local machine
 
