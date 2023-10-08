@@ -111,6 +111,7 @@ async def fetch_project_jobs(project_id: str, include_private_keys=False) -> Lis
     if not include_private_keys:
         for job in jobs:
             job.jobPrivateKey = '' # hide the private key
+            job.consoleOutput = job.consoleOutput[:50000]
     for job in jobs:
         job.dandiApiKey = None # hide the DANDI API key
         _hide_secret_params_in_job(job)
