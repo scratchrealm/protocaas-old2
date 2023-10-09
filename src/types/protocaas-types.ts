@@ -86,6 +86,7 @@ export type ProtocaasJob = {
     computeResourceNodeId?: string
     computeResourceNodeName?: string
     consoleOutput?: string
+    consoleOutputUrl?: string
     timestampQueued?: number
     timestampStarting?: number
     timestampStarted?: number
@@ -128,6 +129,7 @@ export const isProtocaasJob = (x: any): x is ProtocaasJob => {
         computeResourceNodeId: optional(isString),
         computeResourceNodeName: optional(isString),
         consoleOutput: optional(isString),
+        consoleOutputUrl: optional(isString),
         timestampQueued: optional(isNumber),
         timestampStarting: optional(isNumber),
         timestampStarted: optional(isNumber),

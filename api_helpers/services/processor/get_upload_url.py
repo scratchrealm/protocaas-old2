@@ -4,12 +4,16 @@ from ...core.settings import get_settings
 from ._get_signed_upload_url import _get_signed_upload_url
 
 
+# note that output_name = "_console_output" is a special case
 async def get_upload_url(job: ProtocaasJob, output_name: str):
     settings = get_settings()
 
-    aa = [x for x in job.outputFiles if x.name == output_name]
-    if len(aa) == 0:
-        raise Exception(f"No output with name {output_name}")
+    if output_name == "_console_output":
+        pass
+    else:
+        aa = [x for x in job.outputFiles if x.name == output_name]
+        if len(aa) == 0:
+            raise Exception(f"No output with name {output_name} **")
     
     object_key = f"protocaas-outputs/{job.jobId}/{output_name}"
 

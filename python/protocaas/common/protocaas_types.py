@@ -93,6 +93,7 @@ class ProtocaasJob(BaseModel):
     computeResourceNodeId: Union[str, None]=None
     computeResourceNodeName: Union[str, None]=None
     consoleOutput: Union[str, None]=None
+    consoleOutputUrl: Union[str, None]=None
     timestampQueued: Union[float, None]=None
     timestampStarting: Union[float, None]=None
     timestampStarted: Union[float, None]=None

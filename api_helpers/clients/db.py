@@ -111,10 +111,13 @@ async def fetch_project_jobs(project_id: str, include_private_keys=False) -> Lis
     if not include_private_keys:
         for job in jobs:
             job.jobPrivateKey = '' # hide the private key
-            job.consoleOutput = job.consoleOutput[:50000]
     for job in jobs:
         job.dandiApiKey = None # hide the DANDI API key
         _hide_secret_params_in_job(job)
+    for job in jobs:
+        # truncate the console output (this is obsolete now that we have consoleOutputUrl)
+        if job.consoleOutput is not None:
+            job.consoleOutput = job.consoleOutput[:50000]
     return jobs
 
 async def update_project(project_id: str, update: dict):
@@ -231,6 +234,10 @@ async def fetch_compute_resource_jobs(compute_resource_id: str, statuses: Union[
     for job in jobs:
         job.dandiApiKey = None # hide the DANDI API key
         _hide_secret_params_in_job(job)
+    for job in jobs:
+        # truncate the console output (this is obsolete now that we have consoleOutputUrlS)
+        if job.consoleOutput is not None:
+            job.consoleOutput = job.consoleOutput[:50000]
     return jobs
 
 async def update_compute_resource_node(compute_resource_id: str, compute_resource_node_id: str, compute_resource_node_name: str):
@@ -272,6 +279,8 @@ async def fetch_job(job_id: str, *, include_dandi_api_key: bool=False, include_s
         job.dandiApiKey = None
     if not include_secret_params:
         _hide_secret_params_in_job(job)
+    if job.consoleOutput is not None:
+        job.consoleOutput = job.consoleOutput[:50000] # truncate the console output (this is obsolete now that we have consoleOutputUrl)
     return job
 
 async def update_job(job_id: str, update: dict):

@@ -21,6 +21,8 @@ const useJob = (jobId: string) => {
         setRefreshCode(rc => rc + 1)
     }, [])
 
+    const [jobConsoleOutput, setJobConsoleOutput] = useState<string | undefined>()
+
     const {accessToken, userId} = useGithubAuth()
     const auth = useMemo(() => (accessToken ? {githubAccessToken: accessToken, userId} : {}), [accessToken, userId])
 
@@ -31,17 +33,30 @@ const useJob = (jobId: string) => {
             if (!jobId) return
             const job = await fetchJob(jobId, auth)
             if (canceled) return
+
             setJob(job)
+
+            if (job?.consoleOutput) {
+                setJobConsoleOutput(job.consoleOutput)
+            }
+            else if (job?.consoleOutputUrl) {
+                // fetch console output
+                const resp = await fetch(job.consoleOutputUrl)
+                if (resp.ok) {
+                    const text = await resp.text()
+                    setJobConsoleOutput(text)
+                }
+            }
         })()
         return () => {
             canceled = true
         }
     }, [jobId, auth, refreshCode])
-    return {job, refreshJob}
+    return {job, refreshJob, jobConsoleOutput}
 }
 
 const JobView: FunctionComponent<Props> = ({ width, height, jobId }) => {
-    const {job, refreshJob} = useJob(jobId)
+    const {job, refreshJob, jobConsoleOutput} = useJob(jobId)
     const secretParameterNames = useMemo(() => {
         if (!job) return []
         return job.processorSpec.parameters.filter(p => p.secret).map(p => p.name)
@@ -135,7 +150,7 @@ const JobView: FunctionComponent<Props> = ({ width, height, jobId }) => {
             <hr />
             <ExpandableSection title="Console output" defaultExpanded={true}>
                 <pre style={{fontSize: 10}}>
-                    {job.consoleOutput}
+                    {jobConsoleOutput}
                 </pre>
             </ExpandableSection>
             <hr />

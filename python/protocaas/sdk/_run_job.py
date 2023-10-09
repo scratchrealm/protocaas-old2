@@ -3,6 +3,7 @@ import threading
 import queue
 import time
 import subprocess
+import requests
 from ..common._api_request import _processor_get_api_request, _processor_put_api_request
 
 
@@ -13,6 +14,8 @@ from ..common._api_request import _processor_get_api_request, _processor_put_api
 # * Sets the job status to completed or failed in the database via the API
 
 def _run_job(*, job_id: str, job_private_key: str, app_executable: str):
+    _run_job_timer = time.time()
+
     _debug_log(f'Running job {job_id}')
     _set_job_status(job_id=job_id, job_private_key=job_private_key, status='running')
 
@@ -50,6 +53,18 @@ def _run_job(*, job_id: str, job_private_key: str, app_executable: str):
     console_output_changed = False
     last_check_job_exists_time = time.time()
 
+    console_output_upload_url: str = None
+    console_output_upload_url_timestamp = 0
+    def upload_console_output(output: str):
+        nonlocal console_output_upload_url
+        nonlocal console_output_upload_url_timestamp
+        elapsed = time.time() - console_output_upload_url_timestamp
+        if elapsed > 60 * 30:
+            console_output_upload_url_timestamp = time.time()
+            console_output_upload_url = _get_console_output_upload_url(job_id=job_id, job_private_key=job_private_key)
+        if console_output_upload_url is not None:
+            _upload_console_output(console_output_upload_url=console_output_upload_url, output=output)
+
     num_status_check_failures = 0
     succeeded = False
     try:
@@ -75,13 +90,29 @@ def _run_job(*, job_id: str, job_private_key: str, app_executable: str):
             
             if console_output_changed:
                 elapsed = time.time() - last_report_console_output_time
-                if elapsed > 10:
+                run_job_elapsed_time = time.time() - _run_job_timer
+                do_report = False
+                if run_job_elapsed_time < 60 * 2:
+                    # for the first 2 minutes, report every 10 seconds
+                    if elapsed > 10:
+                        do_report = True
+                elif run_job_elapsed_time < 60 * 10:
+                    # for the next 8 minutes, report every 30 seconds
+                    if elapsed > 30:
+                        do_report = True
+                else:
+                    # after that, report every 120 seconds
+                    if elapsed > 60:
+                        do_report = True
+                if do_report:
                     last_report_console_output_time = time.time()
                     console_output_changed = False
                     try:
                         _debug_log('Setting job console output')
-                        _set_job_console_output(job_id=job_id, job_private_key=job_private_key, console_output=all_output.decode('utf-8'))
+                        # _set_job_console_output(job_id=job_id, job_private_key=job_private_key, console_output=all_output.decode('utf-8'))
+                        upload_console_output(output=all_output.decode('utf-8'))
                     except Exception as e:
+                        _debug_log('WARNING: problem setting console output: ' + str(e))
                         print('WARNING: problem setting console output: ' + str(e))
                         pass
             if retcode is not None:
@@ -123,7 +154,8 @@ def _run_job(*, job_id: str, job_private_key: str, app_executable: str):
     if console_output_changed:
         _debug_log('Setting final job console output')
         try:
-            _set_job_console_output(job_id=job_id, job_private_key=job_private_key, console_output=all_output.decode('utf-8'))
+            # _set_job_console_output(job_id=job_id, job_private_key=job_private_key, console_output=all_output.decode('utf-8'))
+            upload_console_output(output=all_output.decode('utf-8'))
         except Exception as e:
             _debug_log('WARNING: problem setting final console output: ' + str(e))
             print('WARNING: problem setting final console output: ' + str(e))
@@ -174,22 +206,41 @@ def _set_job_status(*, job_id: str, job_private_key: str, status: str, error: st
     if not resp['success']:
         raise Exception(f'Error setting job status: {resp["error"]}')
 
-def _set_job_console_output(*, job_id: str, job_private_key: str, console_output: str):
-    """Set the console output of a job in the protocaas API"""
-    url_path = f'/api/processor/jobs/{job_id}/console_output'
+def _get_console_output_upload_url(*, job_id: str, job_private_key: str) -> str:
+    """Get a signed upload URL for the console output of a job"""
+    url_path = f'/api/processor/jobs/{job_id}/outputs/_console_output/upload_url'
     headers = {
         'job-private-key': job_private_key
     }
-    data = {
-        'consoleOutput': console_output
-    }
-    resp = _processor_put_api_request(
+    res = _processor_get_api_request(
         url_path=url_path,
-        headers=headers,
-        data=data
+        headers=headers
     )
-    if not resp['success']:
-        raise Exception(f'Error setting job console output: {resp["error"]}')
+    return res['uploadUrl']
+
+def _upload_console_output(*, console_output_upload_url: str, output: str):
+    """Upload the console output of a job to the cloud bucket"""
+    r = requests.put(console_output_upload_url, data=output.encode('utf-8'))
+    if r.status_code != 200:
+        raise Exception(f'Error uploading console output: {r.status_code} {r.text}')
+
+# This was the old method
+# def _set_job_console_output(*, job_id: str, job_private_key: str, console_output: str):
+#     """Set the console output of a job in the protocaas API"""
+#     url_path = f'/api/processor/jobs/{job_id}/console_output'
+#     headers = {
+#         'job-private-key': job_private_key
+#     }
+#     data = {
+#         'consoleOutput': console_output
+#     }
+#     resp = _processor_put_api_request(
+#         url_path=url_path,
+#         headers=headers,
+#         data=data
+#     )
+#     if not resp['success']:
+#         raise Exception(f'Error setting job console output: {resp["error"]}')
 
 def _debug_log(msg: str):
     # write to protocaas-job.log

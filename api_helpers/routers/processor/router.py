@@ -117,6 +117,7 @@ class ProcessorSetJobConsoleOutputRequest(BaseModel):
 class ProcessorSetJobConsoleOutputResponse(BaseModel):
     success: bool
 
+# This route is obsolete. Use the processor_get_upload_url() route instead.
 @router.put("/jobs/{job_id}/console_output")
 async def processor_set_job_console_output(job_id: str, data: ProcessorSetJobConsoleOutputRequest, job_private_key: str = Header(...)) -> ProcessorSetJobConsoleOutputResponse:
     try:
@@ -145,6 +146,7 @@ class ProcessorGetJobOutputUploadUrlResponse(BaseModel):
     uploadUrl: str
     success: bool
 
+# out that output_name = "_console_output" is a special case
 @router.get("/jobs/{job_id}/outputs/{output_name}/upload_url")
 async def processor_get_upload_url(job_id: str, output_name: str, job_private_key: str = Header(...)) -> ProcessorGetJobOutputUploadUrlResponse:
     try:

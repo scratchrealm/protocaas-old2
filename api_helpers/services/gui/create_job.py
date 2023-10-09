@@ -118,6 +118,7 @@ async def create_job(
             )
         )
 
+    output_bucket_base_url = get_settings().OUTPUT_BUCKET_BASE_URL
     job = ProtocaasJob(
         jobId=job_id,
         jobPrivateKey=job_private_key,
@@ -134,7 +135,8 @@ async def create_job(
         status='pending',
         processorSpec=processor_spec,
         batchId=batch_id,
-        dandiApiKey=dandi_api_key
+        dandiApiKey=dandi_api_key,
+        consoleOutputUrl=f"{output_bucket_base_url}/protocaas-outputs/{job_id}/_console_output"
     )
     
     await insert_job(job)
