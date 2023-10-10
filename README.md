@@ -43,4 +43,4 @@ Apache 2.0
 
 ## Authors
 
-Jeremy Magland (Flatiron Institute) in collaboration with Ben Dichter and Luiz Tauffer (Catalyst Neuro)
+Jeremy Magland (Flatiron Institute) in collaboration with Ben Dichter and Luiz Tauffer (CatalystNeuro)
