@@ -1,12 +1,12 @@
 # Protocaas - Neuroscience Analysis Web App
 
-Protocaas is a prototype web application designed for scientists in research labs who want to efficiently manage and conduct neurophysiology data analysis. Whether you are working with your own data or utilizing public resources from the [DANDI Archive](https://dandiarchive.org/), Protocaas provides a user-friendly platform for organizing, running, and sharing neuroscientific processing jobs.
+Protocaas is a **prototype** web application designed for scientists in research labs who want to efficiently manage and conduct neurophysiology data analysis. The current focus is spike sorting of electrophysiology data. Whether you are working with your own data or utilizing public resources from the [DANDI Archive](https://dandiarchive.org/), Protocaas provides a user-friendly platform for organizing, running, and sharing neuroscientific processing jobs.
 
 :warning: **Please note:** This software is currently in the prototype phase and is not recommended for production use.
 
-If you're a lab working with electrophysiology data and looking for a solution to spike sort your data, consider trying this software as a beta tester. You can use it in the cloud or with your local resources. Reach out to one of the authors if interested.
+If you're a lab working with electrophysiology data and looking for a solution to spike sort your data, consider trying this software as a beta tester. You can use it in the cloud *or* with your local resources. Reach out to one of the authors if interested.
 
-* [Access the live site](https://protocaas.vercel.app)
+* [Access the live site](https://protocaas.vercel.app) (it's a prototype!)
 * [Learn how to host a compute resource](./doc/host_compute_resource.md)
 
 ## System Requirements
@@ -65,4 +65,4 @@ Apache 2.0
 
 ## Authors
 
-Jeremy Magland (Flatiron Institute) in collaboration with Ben Dichter and Luiz Tauffer (Catalyst Neuro)
+Jeremy Magland (Flatiron Institute) in collaboration with Ben Dichter and Luiz Tauffer (CatalystNeuro)
