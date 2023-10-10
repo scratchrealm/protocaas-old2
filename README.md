@@ -21,7 +21,7 @@ Protocaas organizes datasets into workspaces, projects, files and jobs, streamli
 
 In each project, files serve as either pointers to external data sources (e.g., DANDI assets) or as the output of specific processing jobs. These files are typically formatted in NWB (Neurodata Without Borders) format. To get started, you can use the DANDI import tool to seamlessly import data from DANDI repositories. Once imported, you can define processing jobs, such as spike sorting, that take these raw data files as input and generate new project files as output. Project files are immutable.
 
-## Files and jobs are tightly linked
+## Files and Jobs are Tightly Linked
 
 The full provenance history of each file is stored within a Protocaas project. Each generated file is associated with a unique job that generated it, and each job has links to its input and output files. If a file is deleted, then all jobs that link to that job (either as an input or an output) are also deleted. Similarly, if a job is deleted, then the linked files are also deleted. Thus, in a pipeline, deleting a single file can have a cascading effect in deleting files and jobs throughout the project. In this way, Protocaas files always have a full provenance record.
 
@@ -36,6 +36,28 @@ Protocaas processing tools are organized into plugin apps which are containerize
 - Spike sorting using MountainSort 5
 
 As the project matures, we will add more apps to this list. Users can also contribute their own processing apps.
+
+## Frequently Asked Questions
+
+### How do I import data from DANDI?
+
+After logging in with GitHub on the web interface, create a new workspace and project and click the "DANDI Import" tab on the left. Browse the DANDI archive, select the data you want to import using the checkboxes, and then click "Import selected assets". The data will be imported into your project. They system will not create a copy of the data, but rather will create pointers to the data files in the DANDI archive.
+
+### How do I run spike sorting?
+
+TODO
+
+### How do I upload sorting results to DANDI?
+
+TODO
+
+### How do I host my own compute resource?
+
+See [this document](./doc/host_compute_resource.md).
+
+### How do I contribute my own processing app?
+
+TODO
 
 ### LICENSE
 
