@@ -2,6 +2,7 @@ import { FunctionComponent, useCallback, useEffect, useMemo, useReducer, useStat
 import formatByteCount from "../FileBrowser/formatByteCount"
 import { AssetsResponse, AssetsResponseItem, DandisetSearchResultItem, DandisetVersionInfo } from "./types"
 import { getDandiApiHeaders } from "./DandiNwbSelector"
+import { useWorkspace } from "../../WorkspacePage/WorkspacePageContext"
 
 type DandisetViewProps = {
     dandisetId: string
@@ -16,6 +17,9 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({dandisetId, width, 
     const [dandisetVersionInfo, setDandisetVersionInfo] = useState<DandisetVersionInfo | null>(null)
     const [assetsResponses, setAssetsResponses] = useState<AssetsResponse[]>([])
     const [incomplete, setIncomplete] = useState(false)
+
+    const {workspaceRole} = useWorkspace()
+    const canImport = workspaceRole === 'admin' || workspaceRole === 'editor'
 
     const stagingStr = useStaging ? '-staging' : ''
     const stagingStr2 = useStaging ? 'gui-staging.' : ''
@@ -141,10 +145,14 @@ const DandisetView: FunctionComponent<DandisetViewProps> = ({dandisetId, width, 
         <div style={{position: 'absolute', width, height, overflowY: 'hidden'}}>
             <div style={{position: 'absolute', top: 0, width, height: topBarHeight, borderBottom: 'solid 1px #ccc'}}>
                 {
-                    !importing ? (
-                        <button onClick={selectedAssets.assetPaths.length > 0 ? handleImport : undefined} disabled={selectedAssets.assetPaths.length === 0} style={{fontSize: 20, color: buttonColor}}>Import selected assets</button>
+                    canImport ? (
+                        !importing ? (
+                            <button onClick={selectedAssets.assetPaths.length > 0 ? handleImport : undefined} disabled={selectedAssets.assetPaths.length === 0} style={{fontSize: 20, color: buttonColor}}>Import selected assets</button>
+                        ) : (
+                            <span style={{fontSize: 20, color: 'gray'}}>Importing...</span>
+                        )
                     ) : (
-                        <span style={{fontSize: 20, color: 'gray'}}>Importing...</span>
+                        <span style={{color: 'red'}}>You are not authorized to import DANDI assets into this workspace.</span>
                     )
                 }
             </div>

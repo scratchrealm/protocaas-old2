@@ -12,7 +12,7 @@ type DandiUploadWindowProps = {
 }
 
 const DandiUploadWindow: FunctionComponent<DandiUploadWindowProps> = ({ dandiUploadTask, onClose }) => {
-    const {computeResource} = useWorkspace()
+    const {computeResource, workspaceRole} = useWorkspace()
     const {projectId, workspaceId, files, jobs} = useProject()
     const processor = useMemo(() => {
         if (!computeResource) return undefined
@@ -93,6 +93,15 @@ const DandiUploadWindow: FunctionComponent<DandiUploadWindowProps> = ({ dandiUpl
         await createJob(job, auth)
         onClose()
     }, [processor, dandiUploadTask, workspaceId, projectId, files, auth, dandiApiKey, onClose, jobs])
+
+    if (!['admin', 'editor'].includes(workspaceRole || '')) {
+        return (
+            <div>
+                <span style={{color: 'red'}}>You are not authorized to upload to DANDI from this workspace.</span>
+            </div>
+        )
+    }
+
     return (
         <div style={{padding: 30}}>
             <h3>DANDI Upload</h3>

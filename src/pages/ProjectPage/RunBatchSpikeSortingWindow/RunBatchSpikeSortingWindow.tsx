@@ -1,13 +1,12 @@
 import { FunctionComponent, useCallback, useEffect, useMemo, useReducer, useState } from "react"
-import Hyperlink from "../../../components/Hyperlink"
-import { defaultJobDefinition, fetchFile, protocaasJobDefinitionReducer, ProtocaasProcessingJobDefinition } from "../../../dbInterface/dbInterface"
 import { useGithubAuth } from "../../../GithubAuth/useGithubAuth"
+import Hyperlink from "../../../components/Hyperlink"
+import { ProtocaasProcessingJobDefinition, createJob, defaultJobDefinition, fetchFile, protocaasJobDefinitionReducer } from "../../../dbInterface/dbInterface"
 import { ComputeResourceSpecProcessor, ProtocaasFile } from "../../../types/protocaas-types"
 import { useWorkspace } from "../../WorkspacePage/WorkspacePageContext"
+import EditJobDefinitionWindow from "../EditJobDefinitionWindow/EditJobDefinitionWindow"
 import { useNwbFile } from "../FileEditor/NwbFileEditor"
 import { useProject } from "../ProjectPageContext"
-import { createJob } from "../../../dbInterface/dbInterface"
-import EditJobDefinitionWindow from "../EditJobDefinitionWindow/EditJobDefinitionWindow"
 
 type Props = {
     filePaths: string[]
@@ -24,7 +23,7 @@ const RunBatchSpikeSortingWindow: FunctionComponent<Props> = ({ filePaths, onClo
 
     const [selectedSpikeSortingProcessor, setSelectedSpikeSortingProcessor] = useState<string | undefined>(undefined)
 
-    const {computeResource} = useWorkspace()
+    const {computeResource, workspaceRole} = useWorkspace()
     const spikeSorterProcessors = useMemo(() => {
         const ret: ComputeResourceSpecProcessor[] = []
         for (const app of computeResource?.spec?.apps || []) {
@@ -144,6 +143,14 @@ const RunBatchSpikeSortingWindow: FunctionComponent<Props> = ({ filePaths, onClo
         if (!descriptionStringIsValid) return false
         return true
     }, [valid, operating, processor, descriptionStringIsValid])
+
+    if (!['editor', 'admin'].includes(workspaceRole || '')) {
+        return (
+            <div>
+                <span style={{color: 'red'}}>You are not authorized to run spike sorting in this workspace</span>
+            </div>
+        )
+    }
 
     if (!selectedSpikeSortingProcessor) {
         return (

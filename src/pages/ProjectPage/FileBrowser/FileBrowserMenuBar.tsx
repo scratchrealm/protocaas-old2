@@ -4,6 +4,7 @@ import SmallIconButton from "../../../components/SmallIconButton"
 import { confirm } from "../../../confirm_prompt_alert"
 import { useProject } from "../ProjectPageContext"
 import prepareDandiUploadTask, { DandiUploadTask } from "../DandiUpload/prepareDandiUploadTask"
+import { useWorkspace } from "../../WorkspacePage/WorkspacePageContext"
 
 type FileBrowserMenuBarProps = {
     width: number
@@ -17,7 +18,12 @@ type FileBrowserMenuBarProps = {
 const FileBrowserMenuBar: FunctionComponent<FileBrowserMenuBarProps> = ({ width, height, selectedFileNames, onResetSelection, onRunBatchSpikeSorting, onDandiUpload }) => {
     const {deleteFile, refreshFiles} = useProject()
     const [operating, setOperating] = useState(false)
+    const {workspaceRole} = useWorkspace()
     const handleDelete = useCallback(async () => {
+        if (!['admin', 'editor'].includes(workspaceRole || '')) {
+            alert('You are not authorized to delete files in this workspace.')
+            return
+        }
         const okay = await confirm(`Are you sure you want to delete these ${selectedFileNames.length} files?`)
         if (!okay) return
         try {
@@ -31,7 +37,7 @@ const FileBrowserMenuBar: FunctionComponent<FileBrowserMenuBarProps> = ({ width,
             refreshFiles()
             onResetSelection()
         }
-    }, [selectedFileNames, deleteFile, refreshFiles, onResetSelection])
+    }, [selectedFileNames, deleteFile, refreshFiles, onResetSelection, workspaceRole])
 
     const dandiUploadTask = useMemo(() => (
         prepareDandiUploadTask(selectedFileNames)
