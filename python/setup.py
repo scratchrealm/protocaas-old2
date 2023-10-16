@@ -29,7 +29,8 @@ setup(
         'PyYAML',
         'remfile>=0.1.8',
         'pubnub>=7.2.0',
-        'pydantic'
+        'pydantic',
+        'cryptography'
     ],
     entry_points={
         "console_scripts": [
